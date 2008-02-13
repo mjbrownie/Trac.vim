@@ -50,6 +50,8 @@ class TracWiki:
 		""" Saves a Wiki Page """
 		return self.server.wiki.putPage(name, content , {"comment" : comment})
 
+	def setServer (self, url):
+		self.server = xmlrpclib.ServerProxy(url)
 ########################
 # TracTicket 
 ########################
@@ -59,6 +61,9 @@ class TracTicket:
 	def __init__ (self, server, user, passwd, prot, path):
 		self.server = xmlrpclib.ServerProxy(prot + user +":" + passwd + "@" + server + path)
 		self.multicall = xmlrpclib.MultiCall(server)
+
+	def setServer (self, url):
+		self.server = xmlrpclib.ServerProxy(url)
 
 	def getAllTickets(self,owner):
 		""" Gets a List of Ticket Pages """
@@ -85,7 +90,7 @@ class TracTicket:
 		ticket =  self.server.ticket.get(id)
 		str_ticket = "\n\n"
 		str_ticket += "  Ticket ID: " + ticket[0] +"\n" +"\n"
-		str_ticket += "     Status: "  + ticket[3]["status"] + "\n" +"\n"
+		str_ticket += "     Status: " + ticket[3]["status"] + "\n" +"\n"
 		str_ticket += "    Summary: " + ticket[3]["summary"] + "\n" +"\n"
 		str_ticket += "       Type: " + ticket[3]["type"] + "\n" +"\n"
 		str_ticket += "   Priority: " + ticket[3]["priority"] + "\n" +"\n"
@@ -93,7 +98,6 @@ class TracTicket:
 		str_ticket += "  Milestone: " + ticket[3]["milestone"] + "\n" +"\n"
 		str_ticket += "Description:\n\n" + ticket[3]["description"] + "\n" +"\n"
 
-		#print map (str, ticket[3])
 
 		return str_ticket
 		#str_ticket += map (str,ticket)
@@ -268,6 +272,38 @@ class VimWindow:
 		self.write(self.xml_stringfy_childs(xml))
 
 ########################
+# UI Base Class
+########################
+class UI:
+	""" User Interface Base Class """
+	def __init__(self):
+		""" Initialize the User Interface """
+
+	def normal_mode(self):
+		""" restore mode to normal """
+		if self.mode == 0: # is normal mode ?
+			return
+
+		vim.command('sign unplace 1')
+		vim.command('sign unplace 2')
+
+		# destory all created windows
+		self.destroy()
+
+		# restore session
+		vim.command('source ' + self.sessfile)
+		#os.system('rm -f ' + self.sessfile)
+
+		self.winbuf.clear()
+		self.file    = None
+		self.line    = None
+		self.mode    = 0
+		self.cursign = None
+
+		#if self.minibufexpl == 1:
+			#vim.command('MiniBufExplorer') # close minibufexplorer if it is open
+
+########################
 # WikiWindow Editing Window
 ########################
 class WikiWindow (VimWindow):
@@ -281,6 +317,7 @@ class WikiWindow (VimWindow):
 		vim.command('vertical resize +70')
 		vim.command('nnoremap <buffer> :w<cr> :TracSaveWiki<cr>')
 		vim.command('setlocal syntax=wiki')
+		vim.command('setlocal linebreak')
 
 ########################
 # class WikiTOContentsWindow
@@ -301,15 +338,24 @@ class WikiTOContentsWindow (VimWindow):
 		vim.command('setlocal winwidth=30')
 		vim.command('vertical resize 30')
 		vim.command('setlocal cursorline')
+		vim.command('setlocal linebreak')
 
 	def on_write(self):
 		if self.hide_trac_wiki == True:
 			vim.command('silent g/^Trac/d')
 			vim.command('silent g/^Wiki/d')
+			vim.command('silent g/^InterMapTxt$/d')
+			vim.command('silent g/^InterWiki$/d')
+			vim.command('silent g/^SandBox$/d')
+			vim.command('silent g/^InterTrac$/d')
+			vim.command('silent g/^TitleIndex$/d')
+			vim.command('silent g/^RecentChanges$/d')
+			vim.command('silent g/^CamelCase$/d')
+
 ########################
 # TracWikiUI 
 ########################
-class TracWikiUI:
+class TracWikiUI(UI):
 	""" Trac Wiki User Interface Manager """
 	def __init__(self):
 		""" Initialize the User Interface """
@@ -340,30 +386,6 @@ class TracWikiUI:
 		vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
 		self.cursign = '1'
 
-	def normal_mode(self):
-		""" restore mode to normal """
-		if self.mode == 0: # is normal mode ?
-			return
-
-		vim.command('sign unplace 1')
-		vim.command('sign unplace 2')
-
-		# destory all created windows
-		self.destroy()
-
-		# restore session
-		vim.command('source ' + self.sessfile)
-		#os.system('rm -f ' + self.sessfile)
-
-		self.winbuf.clear()
-		self.file    = None
-		self.line    = None
-		self.mode    = 0
-		self.cursign = None
-
-		#if self.minibufexpl == 1:
-			#vim.command('MiniBufExplorer') # close minibufexplorer if it is open
-
 	def destroy(self):
 		""" destroy windows """
 		self.wikiwindow.destroy()
@@ -387,6 +409,7 @@ class TicketWindow (VimWindow):
 		vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
 		vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
+		vim.command('setlocal linebreak')
 
 ########################
 # class TicketTOContentsWindow
@@ -402,14 +425,14 @@ class TicketTOContentsWindow (VimWindow):
 		vim.command('nnoremap <buffer> k ?Ticket ID:<cr>nf: zt')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal cursorline')
+		vim.command('setlocal linebreak')
 
-		#vim.command('setlocal winwidth=10')
-		#vim.command('resize 10')
+
 
 ########################
 # TracTicketUI
 ########################
-class TracTicketUI:
+class TracTicketUI (UI):
 	""" Trac Wiki User Interface Manager """
 	def __init__(self):
 		""" Initialize the User Interface """
@@ -440,30 +463,6 @@ class TracTicketUI:
 		vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
 		self.cursign = '1'
 
-	def normal_mode(self):
-		""" restore mode to normal """
-		if self.mode == 0: # is normal mode ?
-			return
-
-		vim.command('sign unplace 1')
-		vim.command('sign unplace 2')
-
-		# destory all created windows
-		self.destroy()
-
-		# restore session
-		vim.command('source ' + self.sessfile)
-		#os.system('rm -f ' + self.sessfile)
-
-		self.winbuf.clear()
-		self.file    = None
-		self.line    = None
-		self.mode    = 0
-		self.cursign = None
-
-		#if self.minibufexpl == 1:
-			#vim.command('MiniBufExplorer') # close minibufexplorer if it is open
-
 	def destroy(self):
 		""" destroy windows """
 		self.ticketwindow.destroy()
@@ -475,18 +474,58 @@ class TracTicketUI:
 		self.ticketwindow.create("belowright new")
 
 #########################
+# TracServerUI
+#########################
+class TracServerUI (UI):
+	""" Server User Interface View """
+
+	def __init__(self):
+		self.serverwindow = ServerWindow()
+		self.mode       = 0 #Initialised to default
+		self.winbuf     = {}
+
+	def server_mode (self):
+		""" Displays server mode """
+		self.create()
+		vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
+		self.cursign = '1'
+	
+	def create(self):
+		""" create windows """
+		self.serverwindow.create("belowright new")
+
+	def destroy(self):
+		""" destroy windows """
+		self.serverwindow.destroy()
+
+class ServerWindow(VimWindow):
+	""" Server Window """
+
+	def __init__(self, name = 'SERVER_WINDOW'):
+		VimWindow.__init__(self, name)
+
+	def on_create(self):
+		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
+		#TODO fix this it uses a named buffer
+		vim.command('nnoremap <buffer> <cr> "byy:TracServerView <C-R><cr>')
+
+#########################
 # Main Class
 #########################
 class Trac:
 	""" Main Trac class """
-	def __init__ (self, server, user, password, prot , path, comment):
+	def __init__ (self, server, user, password, prot , path, comment , server_list):
 		""" initialize Debugger """
+
 		self.default_comment = comment
 		self.wiki            = TracWiki(server, user, password, prot, path)
 		self.ticket          = TracTicket(server, user, password, prot, path)
 		self.ui              = TracWikiUI()
+		self.uiserver        = TracServerUI()
 		self.uiticket        = TracTicketUI()
 		self.user            = user
+		self.server_list     = server_list
+
 		vim.command('sign unplace *')
 
 	def create_wiki_view(self , page) :
@@ -511,6 +550,21 @@ class Trac:
 			self.uiticket.ticketwindow.write("Select Ticket To Load")
 		else:
 			self.uiticket.ticketwindow.write(self.ticket.getTicket(id))
+
+	def create_server_view(self):
+		""" Display's The Server list view """
+
+		self.uiserver.server_mode()
+		self.uiserver.serverwindow.clean()
+		servers = "\n".join(self.server_list.keys())
+		self.uiserver.serverwindow.write(servers)
+	def set_current_server (self, server_key):
+		""" Sets the current server key """	
+		self.server_url = self.server_list[server_key]
+
+		self.wiki.setServer(self.server_url)
+		self.ticket.setServer(self.server_url)
+		print "SERVER SET TO : " + server_key
 
 #########################
 # VIM API FUNCTIONS
@@ -546,23 +600,27 @@ def trac_init():
 	if comment == '':
 		comment = 'VimTrac update'
 
-	trac = Trac(myserver, user, passwd, prot, path, comment)
+	server_list = vim.eval('g:tracServerList')
+
+	trac = Trac(myserver, user, passwd, prot, path, comment, server_list)
 
 def trac_wiki_view (name = False):
 	''' View Wiki Page '''
 	global trac
-	try: 
-		trac.uiticket.normal_mode()
-		trac.create_wiki_view(name)
-	except: 
-		print "Could not make connection: "  # +  "".join(traceback.format_tb( sys.exc_info()[2]))
+	#try: 
+	trac.uiticket.normal_mode()
+	trac.create_wiki_view(name)
+	#except: 
+	#	print "Could not make connection: "   +  "".join(traceback.format_tb( sys.exc_info()[2]))
 
 def trac_normal_view ():
 	'''  Back to Normal'''
 	global trac
 	try:
+		trac.uiserver.normal_mode()
 		trac.ui.normal_mode()
 		trac.uiticket.normal_mode()
+
 	except: 
 		print "Could not make connection: " # + "".join(traceback.format_tb( sys.exc_info()[2]))
 
@@ -570,8 +628,11 @@ def trac_save_wiki (comment = ''):
 	''' Save the Current Wiki Page '''
 	global trac
 
+	if comment == '':
+		comment = trac.default_comment
+
 	try:
-		trac.wiki.savePage (trac.ui.wikiwindow.dump(), trac.default_comment)
+		trac.wiki.savePage (trac.ui.wikiwindow.dump(), comment)
 	except:
 		print "Could not make connection: " # +  "".join(traceback.format_tb( sys.exc_info()[2]))
 
@@ -583,3 +644,16 @@ def trac_ticket_view (id = False):
 	trac.create_ticket_view(id)
 	#except:
 	#	print "Could not make connection: "  + "".join(traceback.format_tb( sys.exc_info()[2]))
+
+def trac_server(server_key = ''):
+	''' View Server Options '''
+	global trac
+
+	if server_key == '':
+		print "Use Tab completion with :TracServer to cycle through servers"
+		#trac.ui.normal_mode()
+		#trac.create_server_view()
+	else:
+		trac.set_current_server(server_key)
+		trac.uiticket.normal_mode()
+		trac.create_wiki_view(name)

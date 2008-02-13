@@ -109,6 +109,20 @@ let g:tracHideTracWiki = 'no' " SET TO yes/no IF YOU WANT TO HIDE
                                " ALL THE INTERNAL TRAC WIKI PAGES (^Wiki*/^Trac*)
 endif
 
+
+if !exists('g:tracServerList')
+
+let g:tracServerList = {} 
+
+"Add Server Repositories as Dictionary entries
+let g:tracServerList['Vim Trac']             = 'http://vimtracuser:wibble@www.ascetinteractive.com.au/vimtrac/login/xmlrpc'
+
+endif
+
+
+
+
+
 "Leader Short CUTS
 map <leader>to <esc>:TracWikiView<cr>
 map <leader>tw <esc>:TracSaveWiki<cr>
@@ -142,6 +156,12 @@ endif
 com! -nargs=* TracWikiView   python trac_wiki_view  (<f-args>)
 com! -nargs=* TracTicketView python trac_ticket_view  (<f-args>)
 com! -nargs=* TracNormalView python trac_normal_view(<f-args>)
-com! -nargs=* TracSaveWiki   python trac_save_wiki  (<f-args>)
+com! -nargs=* TracSaveWiki   python trac_save_wiki  (<q-args>)
+com! -nargs=* -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
+
+
+fun CompleteTracServers (A,L,P)
+	return keys(g:tracServerList) 
+endfun
 
 python trac_init()
