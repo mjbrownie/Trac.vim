@@ -38,10 +38,22 @@ class TracWiki:
 		""" Gets a List of Wiki Pages """
 		return "\n".join(self.server.wiki.getAllPages())
 	
-	def getPage(self, name):
+	def getPage(self, name, b_create = False):
 		""" Get Wiki Page """
 		self.currentPage = name
-		return self.server.wiki.getPage(name)
+		try:
+			wikitext = self.server.wiki.getPage(name, b_create)
+		except:
+			if b_create:
+				wikitext = "Describe " + name + " here."
+				try:
+					self.savePage (name, wikitext, "Initializing")	
+					return wikitext
+				except:
+					print "Could not create page " + name
+			else:
+				print "Could not find page " + name + ". Use :TracCreateWiki " + name+ " to create it"
+		return wikitext 
 
 	def savePage (self, content, comment):
 		""" Saves a Wiki Page """
@@ -321,7 +333,7 @@ class WikiWindow (VimWindow):
 		vim.command('setlocal linebreak')
 
 ########################
-# class WikiTOContentsWindow
+# WikiTOContentsWindow
 ########################
 class WikiTOContentsWindow (VimWindow):
 	""" Wiki Table Of Contents """
@@ -413,7 +425,7 @@ class TicketWindow (VimWindow):
 		vim.command('setlocal linebreak')
 
 ########################
-# class TicketTOContentsWindow
+# TicketTOContentsWindow
 ########################
 class TicketTOContentsWindow (VimWindow):
 	""" Ticket Table Of Contents """
@@ -427,8 +439,6 @@ class TicketTOContentsWindow (VimWindow):
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal cursorline')
 		vim.command('setlocal linebreak')
-
-
 
 ########################
 # TracTicketUI
@@ -532,7 +542,7 @@ class Trac:
 
 		vim.command('sign unplace *')
 
-	def create_wiki_view(self , page) :
+	def create_wiki_view(self , page, b_create = False) :
 		""" Creates The Wiki View """
 		if (page == False):
 			page = 'WikiStart'
@@ -541,7 +551,7 @@ class Trac:
 		self.ui.tocwindow.clean()
 		self.ui.tocwindow.write(self.wiki.getAllPages())
 		self.ui.wikiwindow.clean()
-		self.ui.wikiwindow.write(self.wiki.getPage(page))
+		self.ui.wikiwindow.write(self.wiki.getPage(page, b_create))
 
 	def create_ticket_view(self ,id = False) :
 		""" Creates The Ticket View """
@@ -592,12 +602,12 @@ def trac_init():
 
 	trac = Trac(comment, server_list)
 
-def trac_wiki_view (name = False):
+def trac_wiki_view (name = False, new_wiki = False):
 	''' View Wiki Page '''
 	global trac
 	#try: 
 	trac.uiticket.normal_mode()
-	trac.create_wiki_view(name)
+	trac.create_wiki_view(name, True)
 	#except: 
 	#	print "Could not make connection: "   +  "".join(traceback.format_tb( sys.exc_info()[2]))
 

@@ -135,11 +135,12 @@ if !has("python")
     finish
 endif
 
-com! -nargs=* TracWikiView   python trac_wiki_view  (<f-args>)
-com! -nargs=* TracTicketView python trac_ticket_view  (<f-args>)
-com! -nargs=* TracNormalView python trac_normal_view(<f-args>)
+com! -nargs=? TracWikiView   python trac_wiki_view  (<f-args>)
+com! -nargs=? TracTicketView python trac_ticket_view  (<f-args>)
+com! -nargs=0 TracNormalView python trac_normal_view(<f-args>)
 com! -nargs=* TracSaveWiki   python trac_save_wiki  (<q-args>)
-com! -nargs=* -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
+com! -nargs=? TracCreateWiki python trac_wiki_view  (<f-args>, True)
+com! -nargs=+ -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
 
 
 fun CompleteTracServers (A,L,P)
