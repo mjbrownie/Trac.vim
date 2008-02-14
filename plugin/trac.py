@@ -7,23 +7,6 @@ import traceback
 import xml.dom.minidom
 import xmlrpclib
 import re
-
-########################
-# TracProtocol 
-########################
-class TracProtocol:
-	""" Trac Transmission layer """
-
-	def __init__ ():
-		self.srver = ''
-		self.server = xmlrpclib.ServerProxy(tracProtocol + tracUser +":" + tracPassword + "@" + tracServer + loginPath)
-
-	def send_msg ():
-		multicall = xmlrpclib.MultiCall(server)
-		for ticket in server.ticket.query("owner=" + tracUser):
-			multicall.ticket.get(ticket)
-		print map(str, multicall())
-
 ########################
 # TracWiki 
 ########################
@@ -44,7 +27,7 @@ class TracWiki:
 		try:
 			wikitext = self.server.wiki.getPage(name)
 		except:
-			if b_create:
+			if b_create == True:
 				wikitext = "Describe " + name + " here."
 				try:
 					self.savePage (name, wikitext, "Initializing")	
@@ -101,16 +84,39 @@ class TracTicket:
 		""" Get Ticket Page """
 
 		ticket =  self.server.ticket.get(id)
-		str_ticket = "\n\n"
-		str_ticket += "  Ticket ID: " + ticket[0] +"\n" +"\n"
-		str_ticket += "     Status: " + ticket[3]["status"] + "\n" +"\n"
-		str_ticket += "    Summary: " + ticket[3]["summary"] + "\n" +"\n"
-		str_ticket += "       Type: " + ticket[3]["type"] + "\n" +"\n"
-		str_ticket += "   Priority: " + ticket[3]["priority"] + "\n" +"\n"
-		str_ticket += "  Component: " + ticket[3]["component"] + "\n" +"\n"
-		str_ticket += "  Milestone: " + ticket[3]["milestone"] + "\n" +"\n"
-		str_ticket += "Description:\n\n" + ticket[3]["description"] + "\n" +"\n"
 
+		ticket_changelog = self.server.ticket.changeLog(id)
+
+		str_ticket = "== Ticket Summary ==\n\n"
+		str_ticket += "*   Ticket ID: " + ticket[0] +"\n" 
+		str_ticket += "*      Status: " + ticket[3]["status"] + "\n" 
+		str_ticket += "*     Summary: " + ticket[3]["summary"] + "\n"
+		str_ticket += "*        Type: " + ticket[3]["type"] + "\n" 
+		str_ticket += "*    Priority: " + ticket[3]["priority"] + "\n" 
+		str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
+		str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
+		str_ticket += "\n*****************************************\n" 
+		str_ticket += "== Description: ==\n\n" 
+		str_ticket += ticket[3]["description"] + "\n" +"\n"
+
+		str_ticket += "== CHANGELOG ==\n\n"
+
+		import datetime
+		for change in ticket_changelog:
+			if change[4] != '':
+				my_time = datetime.datetime.fromtimestamp(change[0]).strftime("%A (%a) %d/%m/%Y %H:%M:%S")
+				str_ticket +=  my_time + "::\n"
+				#just mention if a ticket has been changed
+				if change[2] == 'description':
+					str_ticket += "      (" + change[1]  + ": modified description)\n\n"
+				
+				elif change[2] == 'comment':
+					str_ticket += "      (" + change[1]  + ": comment)\n\n"
+					str_ticket += change[4] + "\n"
+				elif change[2] == 'milestone':
+					str_ticket += "      (" + change[1] + ": milestone set to " + change[4] + ")\n\n"
+				else :
+					str_ticket += "      (" + change[1] + ": " + change[2] + " set to " + change[4] + ")\n\n"
 
 		return str_ticket
 		#str_ticket += map (str,ticket)
@@ -423,6 +429,7 @@ class TicketWindow (VimWindow):
 		vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal linebreak')
+		vim.command('setlocal syntax=wiki')
 
 ########################
 # TicketTOContentsWindow
