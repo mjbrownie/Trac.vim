@@ -42,7 +42,7 @@ class TracWiki:
 		""" Get Wiki Page """
 		self.currentPage = name
 		try:
-			wikitext = self.server.wiki.getPage(name, b_create)
+			wikitext = self.server.wiki.getPage(name)
 		except:
 			if b_create:
 				wikitext = "Describe " + name + " here."
