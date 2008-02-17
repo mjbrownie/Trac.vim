@@ -186,7 +186,7 @@ fun CompleteTracServers (A,L,P)
 endfun
 
 
-let g:tracOptions = 0
+let g:tracOptions = 1
 
 "Command Complete
 fun CompleteMilestone  (A,L,P)

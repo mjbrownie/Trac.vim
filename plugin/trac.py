@@ -58,6 +58,8 @@ class TracTicket:
 		self.server = xmlrpclib.ServerProxy(server_url)
 		self.multicall = xmlrpclib.MultiCall(self.server)
 		self.current_ticket_id = False
+		self.a_option = []
+
 	def setServer (self, url):
 		self.server = xmlrpclib.ServerProxy(url)
 		self.getOptions()
@@ -84,6 +86,10 @@ class TracTicket:
 	def getAllTickets(self,owner):
 		""" Gets a List of Ticket Pages """
 		multicall = xmlrpclib.MultiCall(self.server)
+
+		if self.a_option == []:
+			self.getOptions()
+
 		for ticket in self.server.ticket.query("owner=" + owner):
 			multicall.ticket.get(ticket)
 	
@@ -104,6 +110,7 @@ class TracTicket:
 	def getTicket(self, id):
 		""" Get Ticket Page """
 		self.current_ticket_id = id
+
 		ticket =  self.server.ticket.get(id)
 		ticket_changelog = self.server.ticket.changeLog(id)
 
@@ -713,9 +720,13 @@ def trac_get_options(op_id):
 
 	option = trac.ticket.returnOptions(op_id)
 
-	if option == [] or trac.ticket.current_ticket_id == False or trac.uiticket.mode == 0:
-		print "This should only be used in ticket mode"
-		return 0
+	#if option == [] or trac.ticket.current_ticket_id == False or trac.uiticket.mode == 0:
+		#print "This should only be used in ticket mode"
+		#print option
+		#print trac.ticket.current_ticket_id 
+		#print trac.uiticket.mode 
+		#
+		#return 0
 	
 	vim.command ('let g:tracOptions = "' + "|".join (option) + '"')
 
