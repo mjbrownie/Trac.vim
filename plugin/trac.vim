@@ -28,7 +28,7 @@
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
 "  Last Change: 
 "          URL: 
-"      Version: 0.1
+"      Version: 0.2.2
 "
 "        Usage: 
 "
@@ -47,10 +47,16 @@
 "
 "               or
 "
+"               :TracServers <server name   - Sets the current trac Server
+"               (use tab complete) 
+"               :TracNormalView             - Close VimTrac to the normal View
+"
+"               """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"
+"               Trac Wiki Commands
+"
 "               :TracWikiView <WikiPage>    - Open the wiki View
-"               :TracNormalView             - Close the wiki View
 "               :TracSaveWiki "<Comment>"   - Saves the Active Wiki Page
-"               :TracTicketView <Ticket ID> - Open Trac Ticket Browser
 "
 "               In the Wiki TOC View Pages can be loaded by hitting <enter> 
 "
@@ -61,15 +67,40 @@
 "               Wikis can now be saved with :w and :wq. 
 "               In all Trac windows :q will return to the normal view
 "
+"               Wiki Syntax will work with this wiki syntax file
+"               http://www.vim.org/scripts/script.php?script_id=725
+"               
+"               """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"
+"               Trac Ticket Commands
+"
+"               :TracTicketView <Ticket ID> - Open Trac Ticket Browser
+"
+"               Trac current ticket option modifications (use tab complete)
+"
+"               :TTSetMilestone <Milestone> 
+"               :TTSetType <Type 
+"               :TTSetStatus <Status>
+"               :TTSetResolution <Resolution>
+"               :TTSetPriority <Priority >
+"               :TTSetSeverity <Severity >
+"               :TTSetComponent <Component>
+"               :TTSetSummary <Summary >
+"
+"           
+"               :TTAddComment               - Add the comment to the current
+"                                             ticket
+"
+"
 "				In the Ticket List window j and k jump to next ticket
 "				enter will select a ticket if it is hovering over a number
 "
-"               Wiki Syntax will work with this wiki syntax file
-"               http://www.vim.org/scripts/script.php?script_id=725
 "         Bugs:
 "
 "               Ocassionally when a wiki page/ticket is loaded it will throw an error.
 "               Just try and load it again
+"
+"               Please log any issues at http://www.ascetinteractive.com.au/vimtrac 
 "
 "        To Do: 
 "               - Complete Error handling for missing Files/Trac Error States
@@ -100,10 +131,6 @@ let g:tracServerList = {}
 let g:tracServerList['Vim Trac']             = 'http://vimtracuser:wibble@www.ascetinteractive.com.au/vimtrac/login/xmlrpc'
 
 endif
-
-
-
-
 
 "Leader Short CUTS
 map <leader>to <esc>:TracWikiView<cr>
@@ -142,6 +169,7 @@ com! -nargs=* TracSaveWiki   python trac_save_wiki  (<q-args>)
 com! -nargs=? TracCreateWiki python trac_wiki_view  (<f-args>, True)
 com! -nargs=+ -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
 
+"Trac Ticket modifications
 com! -nargs=? -complete=customlist,CompleteMilestone TTSetMilestone python trac_set_ticket (<f-args>, 'milestone' )
 com! -nargs=? -complete=customlist,CompleteType TTSetType python trac_set_ticket (<f-args>, 'type' )
 com! -nargs=? -complete=customlist,CompleteStatus TTSetStatus python trac_set_ticket (<f-args>, 'status' )
@@ -150,44 +178,80 @@ com! -nargs=? -complete=customlist,CompletePriority TTSetPriority python trac_se
 com! -nargs=? -complete=customlist,CompleteSeverity TTSetSeverity python trac_set_ticket (<f-args>, 'severity' )
 com! -nargs=? -complete=customlist,CompleteComponent TTSetComponent python trac_set_ticket (<f-args>, 'component' )
 
+com! -nargs=+ TTSetSummary python (<q-args>, 'summary')
+com! -nargs=0 TTAddComment python trac_add_comment()
+
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
 endfun
 
+
+let g:tracOptions = 0
+
+"Command Complete
 fun CompleteMilestone  (A,L,P)
-	g:tracMilestone = python trac_get_options(0)
-	return g:tracMilestone 
+	python trac_get_options(0)
+
+	if g:tracOptions == 0
+		return 0	
+	endif
+
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteType  (A,L,P)
-	g:tracCompleteType = python trac_get_options(1)
-	return g:tracCompleteType 
+	if g:tracOptions == 0
+		return 0	
+	endif
+
+	python trac_get_options(1)
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteStatus  (A,L,P)
-	g:tracCompleteStatus   = python trac_get_options(2)
-	return g:tracCompleteStatus   
+	if g:tracOptions == 0
+		return 0	
+	endif
+
+	python trac_get_options(2)
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteResolution  (A,L,P)
-	g:tracCompleteResolution   = python trac_get_options(3)
-	return g:tracCompleteResolution   
+	if g:tracOptions == 0
+		return 0	
+	endif
+
+	python trac_get_options(3)
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompletePriority  (A,L,P)
-	g:tracCompletePriority   = python trac_get_options(4)
-	return g:tracCompletePriority   
+	
+	if g:tracOptions == 0
+		return 0	
+	endif
+	
+	python trac_get_options(4)
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteSeverity  (A,L,P)
-	g:tracCompleteSeverity   = python trac_get_options(5)
-	return g:tracCompleteSeverity   
+	if g:tracOptions == 0
+		return 0	
+	endif
+
+	python trac_get_options(5)
+	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteComponent  (A,L,P)
-	g:tracCompleteComponent   = python trac_get_options(6)
-	return g:tracCompleteComponent   
+	if g:tracOptions == 0
+		return 0	
+	endif
+	
+	python trac_get_options(6)
+	return split (g:tracOptions, '|' )
 endfun
-
 
 python trac_init()

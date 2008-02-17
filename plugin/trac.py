@@ -57,7 +57,7 @@ class TracTicket:
 	def __init__ (self, server_url):
 		self.server = xmlrpclib.ServerProxy(server_url)
 		self.multicall = xmlrpclib.MultiCall(self.server)
-
+		self.current_ticket_id = False
 	def setServer (self, url):
 		self.server = xmlrpclib.ServerProxy(url)
 		self.getOptions()
@@ -339,9 +339,6 @@ class UI:
 		self.mode    = 0
 		self.cursign = None
 
-		#if self.minibufexpl == 1:
-			#vim.command('MiniBufExplorer') # close minibufexplorer if it is open
-
 ########################
 # WikiWindow Editing Window
 ########################
@@ -460,8 +457,8 @@ class TicketCommentWindow (VimWindow):
 		VimWindow.__init__(self, name)
 
 	def on_create(self):
-		vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
-		vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
+		vim.command('nnoremap <buffer> :w<cr> :TTAddComment<cr>')
+		vim.command('nnoremap <buffer> :wq<cr> :TTAddComment<cr>:TracNormalView<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal syntax=wiki')
 
@@ -707,12 +704,41 @@ def trac_server(server_key = ''):
 
 def trac_get_options(op_id):
 	global trac
-	return trac.ticket.returnOptions(op_id)
+
+	option = trac.ticket.returnOptions(op_id)
+
+	if option == [] or trac.ticket.current_ticket_id == False or trac.uiticket.mode == 0:
+		print "This should only be used in ticket mode"
+		return 0
+	
+	vim.command ('let g:tracOptions = "' + "|".join (option) + '"')
 
 def trac_set_ticket(option,value):
 	global trac
 
+	if value == '':
+		print option + " was empty. No changes made."
+		return 0
+
+	if trac.uiticket.mode == 0 or trac.ticket.current_ticket_id == False:
+		print "Cannot make changes when there is no current ticket open in Ticket View"
+		return 0
+
 	comment = ''
-	attribs = {option:value}
+	attribs = {value:option}
 	trac.ticket.updateTicket(comment, attribs, False)
 
+def trac_add_comment():
+	global trac
+	comment = trac.uiticket.commentwindow.dump()
+	attribs = {}
+	if comment == '':
+		print "Comment window is empty. Not adding to ticket"
+
+	if trac.uiticket.mode == 0 or trac.ticket.current_ticket_id == False:
+		print "Cannot make changes when there is no current ticket is open in Ticket View"
+		return 0
+
+	trac.ticket.updateTicket(comment, attribs, False)
+	trac.uiticket.commentwindow.clean()
+	trac.create_ticket_view(trac.ticket.current_ticket_id)
