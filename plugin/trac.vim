@@ -142,9 +142,52 @@ com! -nargs=* TracSaveWiki   python trac_save_wiki  (<q-args>)
 com! -nargs=? TracCreateWiki python trac_wiki_view  (<f-args>, True)
 com! -nargs=+ -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
 
+com! -nargs=? -complete=customlist,CompleteMilestone TTSetMilestone python trac_set_ticket (<f-args>, 'milestone' )
+com! -nargs=? -complete=customlist,CompleteType TTSetType python trac_set_ticket (<f-args>, 'type' )
+com! -nargs=? -complete=customlist,CompleteStatus TTSetStatus python trac_set_ticket (<f-args>, 'status' )
+com! -nargs=? -complete=customlist,CompleteResolution TTSetResolution python trac_set_ticket (<f-args>, 'resolution' )
+com! -nargs=? -complete=customlist,CompletePriority TTSetPriority python trac_set_ticket (<f-args>, 'priority' )
+com! -nargs=? -complete=customlist,CompleteSeverity TTSetSeverity python trac_set_ticket (<f-args>, 'severity' )
+com! -nargs=? -complete=customlist,CompleteComponent TTSetComponent python trac_set_ticket (<f-args>, 'component' )
 
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
 endfun
+
+fun CompleteMilestone  (A,L,P)
+	g:tracMilestone = python trac_get_options(0)
+	return g:tracMilestone 
+endfun
+
+fun CompleteType  (A,L,P)
+	g:tracCompleteType = python trac_get_options(1)
+	return g:tracCompleteType 
+endfun
+
+fun CompleteStatus  (A,L,P)
+	g:tracCompleteStatus   = python trac_get_options(2)
+	return g:tracCompleteStatus   
+endfun
+
+fun CompleteResolution  (A,L,P)
+	g:tracCompleteResolution   = python trac_get_options(3)
+	return g:tracCompleteResolution   
+endfun
+
+fun CompletePriority  (A,L,P)
+	g:tracCompletePriority   = python trac_get_options(4)
+	return g:tracCompletePriority   
+endfun
+
+fun CompleteSeverity  (A,L,P)
+	g:tracCompleteSeverity   = python trac_get_options(5)
+	return g:tracCompleteSeverity   
+endfun
+
+fun CompleteComponent  (A,L,P)
+	g:tracCompleteComponent   = python trac_get_options(6)
+	return g:tracCompleteComponent   
+endfun
+
 
 python trac_init()

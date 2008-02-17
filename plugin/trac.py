@@ -60,20 +60,41 @@ class TracTicket:
 
 	def setServer (self, url):
 		self.server = xmlrpclib.ServerProxy(url)
+		self.getOptions()
+
+	def getOptions (self): 
+		""" Get all milestone/ priority /status options """
+
+		multicall = xmlrpclib.MultiCall(self.server)
+		multicall.ticket.milestone.getAll()
+		multicall.ticket.type.getAll()
+		multicall.ticket.status.getAll()
+		multicall.ticket.resolution.getAll()
+		multicall.ticket.priority.getAll() 
+		multicall.ticket.severity.getAll()
+		multicall.ticket.component.getAll()
+		
+		a_option = []
+
+		for option in  multicall():
+			a_option.append(option)
+
+		self.a_option =  a_option
 
 	def getAllTickets(self,owner):
 		""" Gets a List of Ticket Pages """
 		multicall = xmlrpclib.MultiCall(self.server)
-		for ticket in self.server.ticket.query("owner=" + owner ):
+		for ticket in self.server.ticket.query("owner=" + owner):
 			multicall.ticket.get(ticket)
 	
 		ticket_list = "" 
 
 		for ticket in multicall():
 			if ticket[3]["status"] != "closed":
-				str_ticket =  "Ticket ID: " + str(ticket[0]) + "\n"
-				str_ticket += "Status:" + ticket[3]["status"]+ "\n" 
-				str_ticket += "Summary:" + ticket[3]["summary"]+ "\n\n"
+				str_ticket =  " * Ticket ID: " + str(ticket[0]) + "\n"
+				str_ticket += " * Status: " + ticket[3]["status"]+ "\n" 
+				str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n\n"
+				str_ticket += "--------------------------------------------\n\n"
 
 				ticket_list += str_ticket
 
@@ -82,12 +103,12 @@ class TracTicket:
 	
 	def getTicket(self, id):
 		""" Get Ticket Page """
-
+		self.current_ticket_id = id
 		ticket =  self.server.ticket.get(id)
 
 		ticket_changelog = self.server.ticket.changeLog(id)
 
-		str_ticket = "== Ticket Summary ==\n\n"
+		str_ticket = "= Ticket Summary =\n\n"
 		str_ticket += "*   Ticket ID: " + ticket[0] +"\n" 
 		str_ticket += "*      Status: " + ticket[3]["status"] + "\n" 
 		str_ticket += "*     Summary: " + ticket[3]["summary"] + "\n"
@@ -95,38 +116,37 @@ class TracTicket:
 		str_ticket += "*    Priority: " + ticket[3]["priority"] + "\n" 
 		str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
 		str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
-		str_ticket += "\n*****************************************\n" 
-		str_ticket += "== Description: ==\n\n" 
+		str_ticket += "\n---------------------------------------------------\n" 
+		str_ticket += "= Description: =\n\n" 
 		str_ticket += ticket[3]["description"] + "\n" +"\n"
 
-		str_ticket += "== CHANGELOG ==\n\n"
+		str_ticket += "= CHANGELOG =\n\n"
 
 		import datetime
 		for change in ticket_changelog:
 			if change[4] != '':
 				my_time = datetime.datetime.fromtimestamp(change[0]).strftime("%A (%a) %d/%m/%Y %H:%M:%S")
-				str_ticket +=  my_time + "::\n"
+				str_ticket +=  '== ' +  my_time + " ==\n"
 				#just mention if a ticket has been changed
 				if change[2] == 'description':
 					str_ticket += "      (" + change[1]  + ": modified description)\n\n"
 				
 				elif change[2] == 'comment':
 					str_ticket += "      (" + change[1]  + ": comment)\n\n"
-					str_ticket += change[4] + "\n"
+					str_ticket += change[4] + "\n\n"
 				elif change[2] == 'milestone':
 					str_ticket += "      (" + change[1] + ": milestone set to " + change[4] + ")\n\n"
 				else :
 					str_ticket += "      (" + change[1] + ": " + change[2] + " set to " + change[4] + ")\n\n"
 
 		return str_ticket
-		#str_ticket += map (str,ticket)
-	#def saveTicket (self, content, comment):
-		#""" Saves a Ticket Ticket """
-		#return self.server.wiki.putTicket(self.currentTicket, content , {"comment" : comment})
-	#
-	#def createTicket (self, name, content, comment):
-		#""" Saves a Ticket Ticket """
-		#return self.server.wiki.putTicket(name, content , {"comment" : comment})
+
+	def updateTicket(self, comment, attribs = {}, notify = False):
+		""" add ticket comments change attributes """
+		return self.server.ticket.update(self.current_ticket_id,comment,attribs,notify)
+
+	def returnOptions(self,op_id):
+		return self.a_option[op_id]
 
 ########################
 # VimWindow 
@@ -432,6 +452,20 @@ class TicketWindow (VimWindow):
 		vim.command('setlocal syntax=wiki')
 
 ########################
+# TicketCommentWindow
+########################
+class TicketCommentWindow (VimWindow):
+	""" For adding Comments to tickets """
+	def __init__ (self,name = 'TICKET_COMMENT_WINDOW'):
+		VimWindow.__init__(self, name)
+
+	def on_create(self):
+		vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
+		vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
+		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
+		vim.command('setlocal syntax=wiki')
+
+########################
 # TicketTOContentsWindow
 ########################
 class TicketTOContentsWindow (VimWindow):
@@ -446,6 +480,7 @@ class TicketTOContentsWindow (VimWindow):
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal cursorline')
 		vim.command('setlocal linebreak')
+		vim.command('setlocal syntax=wiki')
 
 ########################
 # TracTicketUI
@@ -454,11 +489,12 @@ class TracTicketUI (UI):
 	""" Trac Wiki User Interface Manager """
 	def __init__(self):
 		""" Initialize the User Interface """
-		self.ticketwindow = TicketWindow()
-		self.tocwindow  = TicketTOContentsWindow()
-		self.mode       = 0 #Initialised to default
-		self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
-		self.winbuf     = {}
+		self.ticketwindow  = TicketWindow()
+		self.tocwindow     = TicketTOContentsWindow()
+		self.commentwindow = TicketCommentWindow()
+		self.mode          = 0 #Initialised to default
+		self.sessfile      = "/tmp/trac_vim_saved_session." + str(os.getpid())
+		self.winbuf        = {}
 
 	def trac_ticket_mode(self):
 		""" change mode to ticket """
@@ -485,11 +521,13 @@ class TracTicketUI (UI):
 		""" destroy windows """
 		self.ticketwindow.destroy()
 		self.tocwindow.destroy()
+		self.commentwindow.destroy()
 
 	def create(self):
 		""" create windows """
 		self.tocwindow.create("vertical belowright new")
 		self.ticketwindow.create("belowright new")
+		self.commentwindow.create("belowright new")
 
 #########################
 # TracServerUI
@@ -560,6 +598,7 @@ class Trac:
 		self.ui.wikiwindow.clean()
 		self.ui.wikiwindow.write(self.wiki.getPage(page, b_create))
 
+
 	def create_ticket_view(self ,id = False) :
 		""" Creates The Ticket View """
 
@@ -571,6 +610,9 @@ class Trac:
 			self.uiticket.ticketwindow.write("Select Ticket To Load")
 		else:
 			self.uiticket.ticketwindow.write(self.ticket.getTicket(id))
+
+		if self.ticket.a_option == []:
+			self.ticket.getOptions()
 
 	def create_server_view(self):
 		""" Display's The Server list view """
@@ -662,3 +704,15 @@ def trac_server(server_key = ''):
 		trac.set_current_server(server_key)
 		trac.uiticket.normal_mode()
 		trac.create_wiki_view('WikiStart')
+
+def trac_get_options(op_id):
+	global trac
+	return trac.ticket.returnOptions(op_id)
+
+def trac_set_ticket(option,value):
+	global trac
+
+	comment = ''
+	attribs = {option:value}
+	trac.ticket.updateTicket(comment, attribs, False)
+
