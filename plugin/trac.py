@@ -105,8 +105,11 @@ class TracTicket:
 		""" Get Ticket Page """
 		self.current_ticket_id = id
 		ticket =  self.server.ticket.get(id)
-
 		ticket_changelog = self.server.ticket.changeLog(id)
+
+		#ticket_options = self.server.ticket.getAvailableActions(id)
+
+
 
 		str_ticket = "= Ticket Summary =\n\n"
 		str_ticket += "*   Ticket ID: " + ticket[0] +"\n" 
@@ -349,7 +352,7 @@ class WikiWindow (VimWindow):
 	def on_create(self):
 		vim.command('nnoremap <buffer> <c-]> :TracWikiView <C-R><C-W><cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
-		vim.command('nnoremap <buffer> :wq<cr> :TrackSaveWiki<cr>:TracNormalView<cr>')
+		vim.command('nnoremap <buffer> :wq<cr> :TracSaveWiki<cr>:TracNormalView<cr>')
 		vim.command('vertical resize +70')
 		vim.command('nnoremap <buffer> :w<cr> :TracSaveWiki<cr>')
 		vim.command('setlocal syntax=wiki')
@@ -387,6 +390,9 @@ class WikiTOContentsWindow (VimWindow):
 			vim.command('silent g/^TitleIndex$/d')
 			vim.command('silent g/^RecentChanges$/d')
 			vim.command('silent g/^CamelCase$/d')
+
+		vim.command('sort')
+		vim.command('silent norm ggOWikiStart')
 
 ########################
 # TracWikiUI 
