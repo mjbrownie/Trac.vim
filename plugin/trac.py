@@ -90,7 +90,8 @@ class TracTicket:
 		if self.a_option == []:
 			self.getOptions()
 
-		for ticket in self.server.ticket.query("owner=" + owner):
+		#for ticket in self.server.ticket.query("owner=" + owner):
+		for ticket in self.server.ticket.query():
 			multicall.ticket.get(ticket)
 	
 		ticket_list = "" 
@@ -154,6 +155,12 @@ class TracTicket:
 	def updateTicket(self, comment, attribs = {}, notify = False):
 		""" add ticket comments change attributes """
 		return self.server.ticket.update(self.current_ticket_id,comment,attribs,notify)
+
+	def createTicket (self, description, summary):
+		""" create a trac ticket """
+
+		attributes = {}
+		self.current_ticket_id =  self.server.ticket.create(summary, description, attributes, False)
 
 	def returnOptions(self,op_id):
 		return self.a_option[op_id]
@@ -388,15 +395,15 @@ class WikiTOContentsWindow (VimWindow):
 
 	def on_write(self):
 		if self.hide_trac_wiki == True:
-			vim.command('silent g/^Trac/d')
-			vim.command('silent g/^Wiki/d')
-			vim.command('silent g/^InterMapTxt$/d')
-			vim.command('silent g/^InterWiki$/d')
-			vim.command('silent g/^SandBox$/d')
-			vim.command('silent g/^InterTrac$/d')
-			vim.command('silent g/^TitleIndex$/d')
-			vim.command('silent g/^RecentChanges$/d')
-			vim.command('silent g/^CamelCase$/d')
+			vim.command('silent g/^Trac/d _')
+			vim.command('silent g/^Wiki/d _')
+			vim.command('silent g/^InterMapTxt$/d _')
+			vim.command('silent g/^InterWiki$/d _')
+			vim.command('silent g/^SandBox$/d _')
+			vim.command('silent g/^InterTrac$/d _')
+			vim.command('silent g/^TitleIndex$/d _')
+			vim.command('silent g/^RecentChanges$/d _')
+			vim.command('silent g/^CamelCase$/d _')
 
 		vim.command('sort')
 		vim.command('silent norm ggOWikiStart')
@@ -746,16 +753,37 @@ def trac_set_ticket(option,value):
 	trac.ticket.updateTicket(comment, attribs, False)
 
 def trac_add_comment():
+	""" Adds Comment window comments to the current ticket """
 	global trac
-	comment = trac.uiticket.commentwindow.dump()
-	attribs = {}
-	if comment == '':
-		print "Comment window is empty. Not adding to ticket"
 
 	if trac.uiticket.mode == 0 or trac.ticket.current_ticket_id == False:
 		print "Cannot make changes when there is no current ticket is open in Ticket View"
 		return 0
 
+	comment = trac.uiticket.commentwindow.dump()
+	attribs = {}
+
+	if comment == '':
+		print "Comment window is empty. Not adding to ticket"
+
 	trac.ticket.updateTicket(comment, attribs, False)
+	trac.uiticket.commentwindow.clean()
+	trac.create_ticket_view(trac.ticket.current_ticket_id)
+
+def trac_create_ticket(summary = ''):
+	""" writes comment window to a new  ticket  """
+	global trac
+
+	if trac.uiticket.mode == 0:
+		print "Can't create a ticket when not in Ticket View"
+		return 0
+
+	description = trac.uiticket.commentwindow.dump()
+	attribs = {}
+
+	if description == '' or summary == '':
+		print "Comment window and Summary cannot be empty. Not creating ticket"
+
+	trac.ticket.createTicket(description,summary )
 	trac.uiticket.commentwindow.clean()
 	trac.create_ticket_view(trac.ticket.current_ticket_id)

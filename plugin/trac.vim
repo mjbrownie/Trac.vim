@@ -180,7 +180,7 @@ com! -nargs=? -complete=customlist,CompleteComponent TTSetComponent python trac_
 
 com! -nargs=+ TTSetSummary python (<q-args>, 'summary')
 com! -nargs=0 TTAddComment python trac_add_comment()
-
+com! -nargs=+ TTCreateTicket python trac_create_ticket(<q-args>)
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
 endfun
