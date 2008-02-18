@@ -10,12 +10,15 @@ import re
 ########################
 # TracWiki 
 ########################
-class TracWiki:
-	""" Trac Wiki Class """
-
+class TracRPC:
 	def __init__ (self, server_url):
 		self.server = xmlrpclib.ServerProxy(server_url)
 		self.multicall = xmlrpclib.MultiCall(self.server)
+	def setServer (self, url):
+		self.server = xmlrpclib.ServerProxy(url)
+
+class TracWiki(TracRPC):
+	""" Trac Wiki Class """
 
 	def getAllPages(self):
 		""" Gets a List of Wiki Pages """
@@ -46,17 +49,16 @@ class TracWiki:
 		""" Saves a Wiki Page """
 		return self.server.wiki.putPage(name, content , {"comment" : comment})
 
-	def setServer (self, url):
-		self.server = xmlrpclib.ServerProxy(url)
 ########################
 # TracTicket 
 ########################
-class TracTicket:
+class TracTicket(TracRPC):
 	""" Trac Ticket Class """
 
 	def __init__ (self, server_url):
-		self.server = xmlrpclib.ServerProxy(server_url)
-		self.multicall = xmlrpclib.MultiCall(self.server)
+		
+		TracRPC.__init__(self, server_url)
+		
 		self.current_ticket_id = False
 		self.a_option = []
 
@@ -165,6 +167,21 @@ class TracTicket:
 	def returnOptions(self,op_id):
 		return self.a_option[op_id]
 
+class TracSearch(TracRPC):
+	""" Search for tickets and Wiki's """
+	def __init__ (self, server_url):
+		TracRPC.__init__(self, server_url)
+
+	def search(self , search_pattern):
+		""" Perform a search call  """
+		a_search =  self.server.search.performSearch(search_pattern)
+		
+		str_result = "Results for " + search_pattern + "\n\n"
+		for search in a_search:
+			str_result += "\n".join(search)
+			str_result += "\n---------------------------------\n"
+
+		return str_result
 ########################
 # VimWindow 
 ########################
@@ -452,6 +469,55 @@ class TracWikiUI(UI):
 		self.tocwindow.create("belowright new")
 		self.wikiwindow.create("vertical belowright new")
 
+class TracSearchWindow(VimWindow):
+	""" for displaying search results """
+	def __init__(self, name = 'SEARCH_WINDOW'):
+		VimWindow.__init__(self, name)
+	def on_create(self):
+		vim.command('nnoremap <buffer> <c-]> :TracWikiView <C-R><C-W><cr>')
+		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
+		vim.command('setlocal syntax=wiki')
+		vim.command('setlocal linebreak')
+
+class TracSearchUI(UI):
+	""" Seach UI manager """
+	def __init__(self):
+		""" Initialize the User Interface """
+		self.searchwindow = TracSearchWindow()
+		self.mode       = 0 #Initialised to default
+		self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
+		self.winbuf     = {}
+		
+	def search_mode(self):
+		""" Opens Search Window """
+
+		if self.mode == 1: # is wiki mode ?
+		  return
+		self.mode = 1
+		#if self.minibufexpl == 1:
+		  #vim.command('CMiniBufExplorer')         # close minibufexplorer if it is open
+		# save session
+		vim.command('mksession! ' + self.sessfile)
+		for i in range(1, len(vim.windows)+1):
+		  vim.command(str(i)+'wincmd w')
+		  self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
+		                                          # when buffer is not saved at all.
+		#vim.command('silent topleft new')       # create srcview window (winnr=1)
+		#for i in range(2, len(vim.windows)+1):
+		#  vim.command(str(i)+'wincmd w')
+		#  vim.command('hide')
+		self.create()
+		vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
+		self.cursign = '1'
+
+	def destroy(self):
+		""" destroy windows """
+		self.searchwindow.destroy()
+
+	def create(self):
+		""" create windows """
+		self.searchwindow.create("vertical belowright new")
+
 ########################
 # TicketWindow Editing Window
 ########################
@@ -498,6 +564,7 @@ class TicketTOContentsWindow (VimWindow):
 		vim.command('setlocal cursorline')
 		vim.command('setlocal linebreak')
 		vim.command('setlocal syntax=wiki')
+		vim.command('silent norm ggf: <esc>')
 
 ########################
 # TracTicketUI
@@ -588,17 +655,21 @@ class ServerWindow(VimWindow):
 class Trac:
 	""" Main Trac class """
 	def __init__ (self, comment , server_list):
-		""" initialize Debugger """
+		""" initialize Trac """
 
 		self.server_list     = server_list
 		self.server_url      = server_list.values()[0]
 
 		self.default_comment = comment
+		
 		self.wiki            = TracWiki(self.server_url)
+		self.search          = TracSearch(self.server_url)
 		self.ticket          = TracTicket(self.server_url)
+
 		self.ui              = TracWikiUI()
 		self.uiserver        = TracServerUI()
 		self.uiticket        = TracTicketUI()
+		self.uisearch        = TracSearchUI()
 		self.user            = self.get_user(self.server_url)
 
 
@@ -614,7 +685,6 @@ class Trac:
 		self.ui.tocwindow.write(self.wiki.getAllPages())
 		self.ui.wikiwindow.clean()
 		self.ui.wikiwindow.write(self.wiki.getPage(page, b_create))
-
 
 	def create_ticket_view(self ,id = False) :
 		""" Creates The Ticket View """
@@ -642,8 +712,11 @@ class Trac:
 		""" Sets the current server key """	
 		self.server_url = self.server_list[server_key]
 		self.user = self.get_user(self.server_url)
+
 		self.wiki.setServer(self.server_url)
 		self.ticket.setServer(self.server_url)
+		self.search.setServer(self.server_url)
+		
 		self.user = self.get_user(self.server_url)
 		print "SERVER SET TO : " + server_key
 
@@ -684,6 +757,7 @@ def trac_normal_view ():
 		trac.uiserver.normal_mode()
 		trac.ui.normal_mode()
 		trac.uiticket.normal_mode()
+		trac.uisearch.normal_mode()
 
 	except: 
 		print "Could not make connection: " # + "".join(traceback.format_tb( sys.exc_info()[2]))
@@ -787,3 +861,16 @@ def trac_create_ticket(summary = ''):
 	trac.ticket.createTicket(description,summary )
 	trac.uiticket.commentwindow.clean()
 	trac.create_ticket_view(trac.ticket.current_ticket_id)
+
+def trac_search (keyword):
+	"""  run a search """
+	
+	global trac
+
+	trac.ui.normal_mode()
+	output_string = trac.search.search(keyword)
+
+	trac.uisearch.search_mode()
+	trac.uisearch.searchwindow.clean()
+	trac.uisearch.searchwindow.write(output_string)
+
