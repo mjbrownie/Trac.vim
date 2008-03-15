@@ -48,6 +48,24 @@ class TracWiki(TracRPC):
 	def createPage (self, name, content, comment):
 		""" Saves a Wiki Page """
 		return self.server.wiki.putPage(name, content , {"comment" : comment})
+	
+	def addAttachment (self, file):
+		''' Add attachment '''
+		file_name = os.path.basename (file)
+		
+		self.server.wiki.putAttachment(self.currentPage + '/' + file_name , xmlrpclib.Binary(open(file).read()))
+
+	def getAttachment (self, file):
+		''' Add attachment '''
+		buffer = self.server.wiki.getAttachment( file )
+		file_name = os.path.basename (file)
+		
+		fp = open(file_name , 'w')
+		fp.write (buffer.data)	
+		fp.close()
+
+	def listAttachments(self):
+		self.current_attachments = self.server.wiki.listAttachments(self.currentPage)
 
 ########################
 # TracTicket 
@@ -115,6 +133,9 @@ class TracTicket(TracRPC):
 		self.current_ticket_id = id
 
 		ticket =  self.server.ticket.get(id)
+
+		self.listAttachments()
+
 		ticket_changelog = self.server.ticket.changeLog(id)
 
 		#ticket_options = self.server.ticket.getAvailableActions(id)
@@ -129,6 +150,10 @@ class TracTicket(TracRPC):
 		str_ticket += "*    Priority: " + ticket[3]["priority"] + "\n" 
 		str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
 		str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
+		str_ticket += "* Attachments: " + "\n"
+		for attach in self.current_attachments:
+			str_ticket += '               ' + attach
+
 		str_ticket += "\n---------------------------------------------------\n" 
 		str_ticket += "= Description: =\n\n" 
 		str_ticket += ticket[3]["description"] + "\n" +"\n"
@@ -164,9 +189,32 @@ class TracTicket(TracRPC):
 		attributes = {}
 		self.current_ticket_id =  self.server.ticket.create(summary, description, attributes, False)
 
+	def addAttachment (self, file):
+		''' Add attachment '''
+		file_name = os.path.basename (file)
+		
+		self.server.ticket.putAttachment(self.current_ticket_id, file,'attachment' , xmlrpclib.Binary(open(file).read()))
+
+	def listAttachments(self):
+		a_attach = self.server.ticket.listAttachments(self.current_ticket_id)
+
+		self.current_attachments = []
+		for attach in a_attach:
+			self.current_attachments.append (attach[0])
+
+	
 	def returnOptions(self,op_id):
 		return self.a_option[op_id]
 
+	def getAttachment (self, file):
+		''' Add attachment '''
+		buffer = self.server.ticket.getAttachment( self.current_ticket_id , file )
+		file_name = os.path.basename (file)
+		
+		fp = open(file_name , 'w')
+		fp.write (buffer.data)	
+		fp.close()
+		
 class TracSearch(TracRPC):
 	""" Search for tickets and Wiki's """
 	def __init__ (self, server_url):
@@ -383,9 +431,9 @@ class WikiWindow (VimWindow):
 	def on_create(self):
 		vim.command('nnoremap <buffer> <c-]> :TracWikiView <C-R><C-W><cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
-		vim.command('nnoremap <buffer> :wq<cr> :TracSaveWiki<cr>:TracNormalView<cr>')
+		vim.command('nnoremap <buffer> :wq<cr> :TracSaveWiki')
 		vim.command('vertical resize +70')
-		vim.command('nnoremap <buffer> :w<cr> :TracSaveWiki<cr>')
+		vim.command('nnoremap <buffer> :w<cr> :TracSaveWiki')
 		vim.command('setlocal syntax=wiki')
 		vim.command('setlocal linebreak')
 
@@ -425,6 +473,18 @@ class WikiTOContentsWindow (VimWindow):
 		vim.command('sort')
 		vim.command('silent norm ggOWikiStart')
 
+class WikiAttachmentWindow(VimWindow):
+	def __init__(self, name = 'WIKIATT_WINDOW'):
+		VimWindow.__init__(self, name)
+
+	def on_create(self):
+		vim.command('nnoremap <buffer> <cr> :TWGetAttachment CURRENTLINE<cr>')
+		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
+		vim.command('setlocal winwidth=30')
+		vim.command('vertical resize 30')
+		vim.command('setlocal cursorline')
+		vim.command('setlocal linebreak')
+
 ########################
 # TracWikiUI 
 ########################
@@ -432,11 +492,12 @@ class TracWikiUI(UI):
 	""" Trac Wiki User Interface Manager """
 	def __init__(self):
 		""" Initialize the User Interface """
-		self.wikiwindow = WikiWindow()
-		self.tocwindow  = WikiTOContentsWindow()
-		self.mode       = 0 #Initialised to default
-		self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
-		self.winbuf     = {}
+		self.wikiwindow         = WikiWindow()
+		self.tocwindow          = WikiTOContentsWindow()
+		self.wiki_attach_window = WikiAttachmentWindow()
+		self.mode               = 0 #Initialised to default
+		self.sessfile           = "/tmp/trac_vim_saved_session." + str(os.getpid())
+		self.winbuf             = {}
 
 	def trac_wiki_mode(self):
 		""" change mode to wiki """
@@ -463,6 +524,7 @@ class TracWikiUI(UI):
 		""" destroy windows """
 		self.wikiwindow.destroy()
 		self.tocwindow.destroy()
+		self.wiki_attach_window.destroy()
 
 	def create(self):
 		""" create windows """
@@ -686,6 +748,12 @@ class Trac:
 		self.ui.wikiwindow.clean()
 		self.ui.wikiwindow.write(self.wiki.getPage(page, b_create))
 
+		self.wiki.listAttachments();
+
+		if (self.wiki.current_attachments != []):
+			self.ui.wiki_attach_window.create('vertical belowright new')
+			self.ui.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
+
 	def create_ticket_view(self ,id = False) :
 		""" Creates The Ticket View """
 
@@ -697,6 +765,7 @@ class Trac:
 			self.uiticket.ticketwindow.write("Select Ticket To Load")
 		else:
 			self.uiticket.ticketwindow.write(self.ticket.getTicket(id))
+			#self.ticket.listAttachments()
 
 		if self.ticket.a_option == []:
 			self.ticket.getOptions()
@@ -708,7 +777,7 @@ class Trac:
 		self.uiserver.serverwindow.clean()
 		servers = "\n".join(self.server_list.keys())
 		self.uiserver.serverwindow.write(servers)
-	def set_current_server (self, server_key):
+	def set_current_server (self, server_key, quiet = False):
 		""" Sets the current server key """	
 		self.server_url = self.server_list[server_key]
 		self.user = self.get_user(self.server_url)
@@ -718,7 +787,9 @@ class Trac:
 		self.search.setServer(self.server_url)
 		
 		self.user = self.get_user(self.server_url)
-		print "SERVER SET TO : " + server_key
+
+		if quiet == False:
+			print "SERVER SET TO : " + server_key
 
 	def get_user (self, server_url):
 		#TODO fix for https
@@ -745,8 +816,10 @@ def trac_wiki_view (name = False, new_wiki = False):
 	''' View Wiki Page '''
 	global trac
 	#try: 
+	print 'Connecting...'
 	trac.uiticket.normal_mode()
 	trac.create_wiki_view(name, True)
+	print 'Done.'
 	#except: 
 	#	print "Could not make connection: "   +  "".join(traceback.format_tb( sys.exc_info()[2]))
 
@@ -778,12 +851,14 @@ def trac_ticket_view (id = False):
 	''' Ticket View '''
 	global trac
 	#try:
+	print 'Connecting...'
 	trac.ui.normal_mode()
 	trac.create_ticket_view(id)
+	#print 'Done.'
 	#except:
 	#	print "Could not make connection: "  + "".join(traceback.format_tb( sys.exc_info()[2]))
 
-def trac_server(server_key = ''):
+def trac_server(server_key = '', quiet = False):
 	''' View Server Options '''
 	global trac
 
@@ -792,9 +867,10 @@ def trac_server(server_key = ''):
 		#trac.ui.normal_mode()
 		#trac.create_server_view()
 	else:
-		trac.set_current_server(server_key)
-		trac.uiticket.normal_mode()
-		trac.create_wiki_view('WikiStart')
+		trac.set_current_server(server_key, quiet)
+		if quiet == False:
+			trac.uiticket.normal_mode()
+			trac.create_wiki_view('WikiStart')
 
 def trac_get_options(op_id):
 	global trac
@@ -874,3 +950,63 @@ def trac_search (keyword):
 	trac.uisearch.searchwindow.clean()
 	trac.uisearch.searchwindow.write(output_string)
 
+def trac_add_attachment (file):
+	""" add an attachment to current wiki / ticket """
+	global trac
+
+	if trac.ui.mode == 1:
+		print "Adding attachment to wiki " + trac.wiki.currentPage + '...'
+		trac.wiki.addAttachment (file)
+		print 'Done.'
+	elif trac.uiticket.mode == 1:
+		print "Adding attachment to ticket #" + trac.ticket.current_ticket_id + '...'
+		trac.ticket.addAttachment (file)
+		print 'Done.'
+	
+	else:
+		print "You need an active ticket or wiki open!"
+
+def trac_get_attachment (file):
+	''' retrieves attachment '''
+
+	if (file == 'CURRENTLINE'):
+		file = vim.current.line 
+
+	if trac.ui.mode == 1:
+		print "Retrieving attachment from wiki " + trac.wiki.currentPage + '...'
+		trac.wiki.getAttachment (file)
+		print 'Done.'
+	elif trac.uiticket.mode == 1:
+		print "Retrieving attachment from ticket #" + trac.ticket.current_ticket_id + '...'
+		trac.ticket.getAttachment (file)
+		print 'Done.'
+	else:
+		print "You need an active ticket or wiki open!"
+
+def trac_list_attachments():
+
+	global trac
+
+	if trac.ui.mode == 1:
+		option = trac.wiki.current_attachments
+		print trac.wiki.current_attachments
+	elif trac.uiticket.mode == 1:
+		option = trac.ticket.current_attachments
+	else:
+		print "You need an active ticket or wiki open!"
+	
+	vim.command ('let g:tracOptions = "' + "|".join (option) + '"')
+
+def trac_window_resize():
+
+	global mode
+	mode = mode + 1
+	if mode >= 3:
+		mode = 0
+
+	if mode == 0:
+		vim.command("wincmd =")
+	elif mode == 1:
+		vim.command("wincmd |")
+	if mode == 2:
+		vim.command("wincmd _")

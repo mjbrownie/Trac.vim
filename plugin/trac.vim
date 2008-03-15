@@ -136,6 +136,7 @@ endif
 map <leader>to <esc>:TracWikiView<cr>
 map <leader>tw <esc>:TracSaveWiki<cr>
 map <leader>tq <esc>:TracNormalView<cr>
+map <leader>tt :python trac_window_resize()<cr>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "End Configuration 
 
@@ -179,49 +180,49 @@ com! -nargs=? -complete=customlist,CompletePriority TTSetPriority python trac_se
 com! -nargs=? -complete=customlist,CompleteSeverity TTSetSeverity python trac_set_ticket (<f-args>, 'severity' )
 com! -nargs=? -complete=customlist,CompleteComponent TTSetComponent python trac_set_ticket (<f-args>, 'component' )
 
+com! -nargs=? -complete=file TTAddAttachment python trac_add_attachment(<f-args>)
+com! -nargs=? -complete=file TWAddAttachment python trac_add_attachment(<f-args>)
+
+
+com! -nargs=? -complete=customlist,CompleteAttachments TTGetAttachment python trac_get_attachment (<f-args>)
+com! -nargs=? -complete=customlist,CompleteAttachments TWGetAttachment python trac_get_attachment (<f-args>)
+
 com! -nargs=+ TTSetSummary python (<q-args>, 'summary')
 com! -nargs=0 TTAddComment python trac_add_comment()
 com! -nargs=+ TTCreateTicket python trac_create_ticket(<q-args>)
+
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
 endfun
 
-
 let g:tracOptions = 1
+
+fun CompleteAttachments (A,L,P)
+	python trac_list_attachments()
+
+	return split (g:tracOptions, '|' )
+endfun
 
 "Command Complete
 fun CompleteMilestone  (A,L,P)
 	python trac_get_options(0)
 
-	if g:tracOptions == 0
-		return 0	
-	endif
-
 	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteType  (A,L,P)
-	if g:tracOptions == 0
-		return 0	
-	endif
 
 	python trac_get_options(1)
 	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteStatus  (A,L,P)
-	if g:tracOptions == 0
-		return 0	
-	endif
 
 	python trac_get_options(2)
 	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteResolution  (A,L,P)
-	if g:tracOptions == 0
-		return 0	
-	endif
 
 	python trac_get_options(3)
 	return split (g:tracOptions, '|' )
@@ -229,27 +230,17 @@ endfun
 
 fun CompletePriority  (A,L,P)
 	
-	if g:tracOptions == 0
-		return 0	
-	endif
-	
 	python trac_get_options(4)
 	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteSeverity  (A,L,P)
-	if g:tracOptions == 0
-		return 0	
-	endif
 
 	python trac_get_options(5)
 	return split (g:tracOptions, '|' )
 endfun
 
 fun CompleteComponent  (A,L,P)
-	if g:tracOptions == 0
-		return 0	
-	endif
 	
 	python trac_get_options(6)
 	return split (g:tracOptions, '|' )
