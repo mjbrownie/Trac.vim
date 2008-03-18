@@ -12,9 +12,11 @@ import re
 ########################
 class TracRPC:
 	def __init__ (self, server_url):
+		self.server_url = server_url
 		self.server = xmlrpclib.ServerProxy(server_url)
 		self.multicall = xmlrpclib.MultiCall(self.server)
 	def setServer (self, url):
+		self.server_url = url
 		self.server = xmlrpclib.ServerProxy(url)
 
 class TracWiki(TracRPC):
@@ -66,6 +68,12 @@ class TracWiki(TracRPC):
 
 	def listAttachments(self):
 		self.current_attachments = self.server.wiki.listAttachments(self.currentPage)
+
+	def getWikiHtml(self, wikitext):
+		return self.server.wiki.wikiToHtml(wikitext)
+	
+	def getPageHtml(self, page):
+		return self.server.wiki.getPageHTML(page)
 
 ########################
 # TracTicket 
@@ -226,8 +234,11 @@ class TracSearch(TracRPC):
 		
 		str_result = "Results for " + search_pattern + "\n\n"
 		for search in a_search:
-			str_result += "\n".join(search)
-			str_result += "\n---------------------------------\n"
+			str_result += "\n================================================="
+			str_result += "\n" + search[1]
+			str_result += "\n=================================================\n"
+			str_result += "\n" + search[4]
+			str_result += "\n-------------------------------------------------\n\n\n"
 
 		return str_result
 ########################
@@ -452,6 +463,7 @@ class WikiTOContentsWindow (VimWindow):
 
 	def on_create(self):
 		vim.command('nnoremap <buffer> <cr> :TracWikiView <C-R><C-W><cr>')
+		vim.command('nnoremap <buffer> <Space> :python trac_html_view ()<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal winwidth=30')
 		vim.command('vertical resize 30')
@@ -610,7 +622,8 @@ class TicketCommentWindow (VimWindow):
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal syntax=wiki')
 
-########################
+#######################
+
 # TicketTOContentsWindow
 ########################
 class TicketTOContentsWindow (VimWindow):
@@ -801,6 +814,7 @@ class Trac:
 def trac_init():
 	''' Initialize Trac Environment '''
 	global trac
+	global browser
 
 	# get needed vim variables
 
@@ -812,9 +826,11 @@ def trac_init():
 
 	trac = Trac(comment, server_list)
 
+	browser = vim.eval ('g:tracBrowser')
 def trac_wiki_view (name = False, new_wiki = False):
 	''' View Wiki Page '''
 	global trac
+
 	#try: 
 	print 'Connecting...'
 	trac.uiticket.normal_mode()
@@ -1010,3 +1026,54 @@ def trac_window_resize():
 		vim.command("wincmd |")
 	if mode == 2:
 		vim.command("wincmd _")
+
+def trac_open_browser(page):
+
+	global browser
+
+	#basedir = trac.wiki.server_url.replace('login/xmlrpc', '')
+
+	basedir = re.sub('^(.*)@(.*)/login/xmlrpc$', r'\2',trac.wiki.server_url)
+
+	print 'Opening page with ' + '!' + browser +" " +  basedir + '/wiki/'+ page
+
+	vim.command ('!' + browser +" " + basedir + '/wiki/'+ page);
+
+def trac_preview ():
+	''' browser view of current wiki buffer '''
+	global browser
+
+	if trac.ui.mode == 1:
+		print "Retrieving preview from wiki " + trac.wiki.currentPage + '...'
+		wikitext = trac.ui.wikiwindow.dump()
+	elif trac.uiticket.mode == 1:
+		print "Retrieving preview from ticket #" + trac.ticket.current_ticket_id + '...'
+		wikitext = trac.uiticket.commentwindow.dump()
+	else:
+		print "You need an active ticket or wiki open!"
+
+	html = '<html><body>' + trac.wiki.getWikiHtml (wikitext) +  '</body></html>'
+
+	file_name = vim.eval ('g:tracTempHtml') 
+
+	fp = open(file_name , 'w')
+	fp.write (html)	
+	fp.close()
+
+	vim.command ('!' + browser +" file://" + file_name);	
+
+def trac_html_view():
+	
+	global browser
+
+	page = vim.current.line
+
+	html = '<html><body>' + trac.wiki.getPageHtml (page) +  '</body></html>'
+
+	file_name = vim.eval ('g:tracTempHtml') 
+
+	fp = open(file_name , 'w')
+	fp.write (html)	
+	fp.close()
+
+	vim.command ('!' + browser +" file://" + file_name);	

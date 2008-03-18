@@ -122,6 +122,15 @@ let g:tracHideTracWiki = 'no' " SET TO yes/no IF YOU WANT TO HIDE
                                " ALL THE INTERNAL TRAC WIKI PAGES (^Wiki*/^Trac*)
 endif
 
+if !exists('g:tracTempHtml')
+	let g:tracTempHtml = '/tmp/trac_wiki.html'
+endif
+
+if !exists('g:tracBrowser')
+	let g:tracBrowser = 'lynx'         " For Setting up Browser view (terminal)
+	"let g:tracBrowser = 'firefox'     " For Setting up Browser view (linux gui  - not tested)
+	"let g:tracBrowser = '"C:\Program Files\Mozilla Firefox\firefox.exe"' "GVim on Windows not tested
+endif
 
 if !exists('g:tracServerList')
 
@@ -137,6 +146,8 @@ map <leader>to <esc>:TracWikiView<cr>
 map <leader>tw <esc>:TracSaveWiki<cr>
 map <leader>tq <esc>:TracNormalView<cr>
 map <leader>tt :python trac_window_resize()<cr>
+map <leader>tp :python trac_preview()<cr>
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "End Configuration 
 
@@ -190,6 +201,10 @@ com! -nargs=? -complete=customlist,CompleteAttachments TWGetAttachment python tr
 com! -nargs=+ TTSetSummary python (<q-args>, 'summary')
 com! -nargs=0 TTAddComment python trac_add_comment()
 com! -nargs=+ TTCreateTicket python trac_create_ticket(<q-args>)
+
+com! -nargs=1 TracBrowse python trac_open_browser(<f-args>)
+com! -nargs=0 TTPreview python trac_preview()
+com! -nargs=0 TWPreview python trac_preview()
 
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
