@@ -479,7 +479,7 @@ class WikiTOContentsWindow (VimWindow):
 			self.hide_trac_wiki = False
 
 	def on_create(self):
-		vim.command('nnoremap <buffer> <cr> :TracWikiView <C-R><C-W><cr>')
+		vim.command('nnoremap <buffer> <cr> :python trac_wiki_view("CURRENTLINE")<cr>')
 		vim.command('nnoremap <buffer> <Space> :python trac_html_view ()<cr><cr><cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal winwidth=30')
@@ -854,6 +854,9 @@ def trac_init():
 def trac_wiki_view (name = False, new_wiki = False):
 	''' View Wiki Page '''
 	global trac
+
+	if name == 'CURRENTLINE':
+		name = vim.current.line
 
 	#try: 
 	print 'Connecting...'
