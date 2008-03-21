@@ -1071,7 +1071,7 @@ def trac_open_browser(page):
 
 	vim.command ('!' + browser +" " + basedir + '/wiki/'+ page);
 
-def trac_preview ():
+def trac_preview (b_dump = False):
 	''' browser view of current wiki buffer '''
 	global browser
 
@@ -1083,6 +1083,7 @@ def trac_preview ():
 		wikitext = trac.uiticket.commentwindow.dump()
 	else:
 		print "You need an active ticket or wiki open!"
+		return False
 
 	html = '<html><body>' + trac.wiki.getWikiHtml (wikitext) +  '</body></html>'
 
@@ -1092,7 +1093,15 @@ def trac_preview ():
 	fp.write (html)	
 	fp.close()
 
-	vim.command ('!' + browser +" file://" + file_name);	
+	
+	if b_dump == True:
+		trac.normal_mode()
+		vim.command ('split')
+		vim.command ('enew')
+		vim.command ('r!lynx -dump ' + file_name );
+		vim.command ('set ft=text');
+	else:
+		vim.command ('!' + browser +" file://" + file_name);	
 
 def trac_html_view(page = False):
 	
@@ -1137,4 +1146,3 @@ def trac_changeset_view(changeset, b_full_path = False):
 	vim.command("setlocal buftype=nofile")
 	vim.command ('Nread ' + changeset + '?format=diff');
 	vim.command ('set ft=diff');
-

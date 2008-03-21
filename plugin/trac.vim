@@ -205,6 +205,7 @@ com! -nargs=+ TTCreateTicket python trac_create_ticket(<q-args>)
 com! -nargs=1 TracBrowse python trac_open_browser(<f-args>)
 com! -nargs=0 TTPreview python trac_preview()
 com! -nargs=0 TWPreview python trac_preview()
+com! -nargs=0 TWDump python trac_preview(True)
 
 com! -nargs=1 TracChangesetView python trac_changeset_view(<f-args>, True)
 
