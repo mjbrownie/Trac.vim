@@ -440,7 +440,8 @@ class UI:
 		self.destroy()
 
 		# restore session
-		vim.command('source ' + self.sessfile)
+		#(disabling this)
+		#vim.command('source ' + self.sessfile)
 		#os.system('rm -f ' + self.sessfile)
 
 		self.winbuf.clear()
@@ -536,7 +537,7 @@ class TracWikiUI(UI):
 		#if self.minibufexpl == 1:
 		  #vim.command('CMiniBufExplorer')         # close minibufexplorer if it is open
 		# save session
-		vim.command('mksession! ' + self.sessfile)
+		#vim.command('mksession! ' + self.sessfile)
 		for i in range(1, len(vim.windows)+1):
 		  vim.command(str(i)+'wincmd w')
 		  self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
@@ -590,7 +591,7 @@ class TracSearchUI(UI):
 		#if self.minibufexpl == 1:
 		  #vim.command('CMiniBufExplorer')         # close minibufexplorer if it is open
 		# save session
-		vim.command('mksession! ' + self.sessfile)
+		#vim.command('mksession! ' + self.sessfile)
 		for i in range(1, len(vim.windows)+1):
 		  vim.command(str(i)+'wincmd w')
 		  self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
@@ -680,7 +681,7 @@ class TracTicketUI (UI):
 		#if self.minibufexpl == 1:
 		  #vim.command('CMiniBufExplorer')         # close minibufexplorer if it is open
 		# save session
-		vim.command('mksession! ' + self.sessfile)
+		#vim.command('mksession! ' + self.sessfile)
 		for i in range(1, len(vim.windows)+1):
 		  vim.command(str(i)+'wincmd w')
 		  self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
