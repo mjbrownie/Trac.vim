@@ -62,9 +62,12 @@ class TracWiki(TracRPC):
 		buffer = self.server.wiki.getAttachment( file )
 		file_name = os.path.basename (file)
 		
-		fp = open(file_name , 'w')
-		fp.write (buffer.data)	
-		fp.close()
+		if os.path.exists(file_name) == False:
+			fp = open(file_name , 'w')
+			fp.write (buffer.data)	
+			fp.close()
+		else:
+			print "Will not overwrite existing file "  + file_name
 
 	def listAttachments(self):
 		self.current_attachments = self.server.wiki.listAttachments(self.currentPage)
@@ -122,11 +125,14 @@ class TracTicket(TracRPC):
 		for ticket in self.server.ticket.query():
 			multicall.ticket.get(ticket)
 	
-		ticket_list = "" 
+		ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n" 
 
 		for ticket in multicall():
 			if ticket[3]["status"] != "closed":
-				str_ticket =  " * Ticket ID: " + str(ticket[0]) + "\n"
+				
+				str_ticket = "\n================================================="
+				str_ticket +=  "\nTicket:>> " + str(ticket[0])
+				str_ticket += "\n================================================="
 				str_ticket += " * Status: " + ticket[3]["status"]+ "\n" 
 				str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n\n"
 				str_ticket += "--------------------------------------------\n\n"
@@ -218,10 +224,13 @@ class TracTicket(TracRPC):
 		''' Add attachment '''
 		buffer = self.server.ticket.getAttachment( self.current_ticket_id , file )
 		file_name = os.path.basename (file)
-		
-		fp = open(file_name , 'w')
-		fp.write (buffer.data)	
-		fp.close()
+	
+		if os.path.exists(file_name) == False:
+			fp = open(file_name , 'w')
+			fp.write (buffer.data)	
+			fp.close()
+		else:
+			print "Will not overwrite existing file "  + file_name
 		
 class TracSearch(TracRPC):
 	""" Search for tickets and Wiki's """
@@ -233,9 +242,17 @@ class TracSearch(TracRPC):
 		a_search =  self.server.search.performSearch(search_pattern)
 		
 		str_result = "Results for " + search_pattern + "\n\n"
+		str_result += "(Hit <enter> or <space >on a line containing Ticket:>>)"
 		for search in a_search:
 			str_result += "\n================================================="
-			str_result += "\n" + search[1]
+			
+			if search[0].find('/ticket/') != -1: 
+				str_result += "\nTicket:>> " + os.path.basename (search[0])
+			if search[0].find('/wiki/')!= -1: 
+				str_result += "\nWiki:>> " + os.path.basename(search[0])
+			if search[0].find('/changeset/')!= -1: 
+				str_result += "\nChangeset:>> " + search[0] #os.path.basename(search[0])
+
 			str_result += "\n=================================================\n"
 			str_result += "\n" + search[4]
 			str_result += "\n-------------------------------------------------\n\n\n"
@@ -463,7 +480,7 @@ class WikiTOContentsWindow (VimWindow):
 
 	def on_create(self):
 		vim.command('nnoremap <buffer> <cr> :TracWikiView <C-R><C-W><cr>')
-		vim.command('nnoremap <buffer> <Space> :python trac_html_view ()<cr>')
+		vim.command('nnoremap <buffer> <Space> :python trac_html_view ()<cr><cr><cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal winwidth=30')
 		vim.command('vertical resize 30')
@@ -549,6 +566,8 @@ class TracSearchWindow(VimWindow):
 		VimWindow.__init__(self, name)
 	def on_create(self):
 		vim.command('nnoremap <buffer> <c-]> :TracWikiView <C-R><C-W><cr>')
+		vim.command('nnoremap <buffer> <cr> :python trac_search_view(False)<cr>')
+		vim.command('nnoremap <buffer> <space> :python trac_search_view(True)<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal syntax=wiki')
 		vim.command('setlocal linebreak')
@@ -600,12 +619,12 @@ class TicketWindow (VimWindow):
 	def __init__(self, name = 'TICKET_WINDOW'):
 		VimWindow.__init__(self, name)
 	def on_create(self):
-		vim.command('nnoremap <buffer> <c-]> :TracTicketView <C-R><C-W><cr>')
+		#vim.command('nnoremap <buffer> <c-]> :python trac_ticket_view("CURRENTLINE") <cr>')
 		#vim.command('resize +20')
 		vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
 		vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
-		vim.command('setlocal linebreak')
+		#vim.command('setlocal linebreak')
 		vim.command('setlocal syntax=wiki')
 
 ########################
@@ -632,9 +651,7 @@ class TicketTOContentsWindow (VimWindow):
 		VimWindow.__init__(self, name)
 
 	def on_create(self):
-		vim.command('nnoremap <buffer> <cr> :TracTicketView <C-R><C-W><cr>')
-		vim.command('nnoremap <buffer> j /Ticket ID:<cr>f: zt')
-		vim.command('nnoremap <buffer> k ?Ticket ID:<cr>nf: zt')
+		vim.command('nnoremap <buffer> <cr> :python trac_ticket_view  ("CURRENTLINE")<cr>')
 		vim.command('nnoremap <buffer> :q<cr> :TracNormalView<cr>')
 		vim.command('setlocal cursorline')
 		vim.command('setlocal linebreak')
@@ -755,6 +772,8 @@ class Trac:
 		if (page == False):
 			page = 'WikiStart'
 
+		self.normal_mode()
+
 		self.ui.trac_wiki_mode()
 		self.ui.tocwindow.clean()
 		self.ui.tocwindow.write(self.wiki.getAllPages())
@@ -808,6 +827,11 @@ class Trac:
 		#TODO fix for https
 		return re.sub('http://(.*):.*$',r'\1',server_url)
 
+	def normal_mode(self) :
+		trac.uiserver.normal_mode()
+		trac.ui.normal_mode()
+		trac.uiticket.normal_mode()
+		trac.uisearch.normal_mode()
 #########################
 # VIM API FUNCTIONS
 #########################
@@ -833,7 +857,7 @@ def trac_wiki_view (name = False, new_wiki = False):
 
 	#try: 
 	print 'Connecting...'
-	trac.uiticket.normal_mode()
+	trac_normal_view()
 	trac.create_wiki_view(name, True)
 	print 'Done.'
 	#except: 
@@ -868,7 +892,15 @@ def trac_ticket_view (id = False):
 	global trac
 	#try:
 	print 'Connecting...'
-	trac.ui.normal_mode()
+
+	if id == 'CURRENTLINE': 
+		id = vim.current.line
+		if (id.find('Ticket:>>') == -1):
+			print "Hit enter on a line containing Ticket:>>"
+			return False
+		else :
+			id = id.replace ('Ticket:>> ' ,'') 
+	trac.normal_mode()
 	trac.create_ticket_view(id)
 	#print 'Done.'
 	#except:
@@ -885,7 +917,7 @@ def trac_server(server_key = '', quiet = False):
 	else:
 		trac.set_current_server(server_key, quiet)
 		if quiet == False:
-			trac.uiticket.normal_mode()
+			trac.normal_mode()
 			trac.create_wiki_view('WikiStart')
 
 def trac_get_options(op_id):
@@ -959,7 +991,7 @@ def trac_search (keyword):
 	
 	global trac
 
-	trac.ui.normal_mode()
+	trac.normal_mode()
 	output_string = trac.search.search(keyword)
 
 	trac.uisearch.search_mode()
@@ -1062,11 +1094,12 @@ def trac_preview ():
 
 	vim.command ('!' + browser +" file://" + file_name);	
 
-def trac_html_view():
+def trac_html_view(page = False):
 	
 	global browser
 
-	page = vim.current.line
+	if page == False:
+		page = vim.current.line
 
 	html = '<html><body>' + trac.wiki.getPageHtml (page) +  '</body></html>'
 
@@ -1077,3 +1110,31 @@ def trac_html_view():
 	fp.close()
 
 	vim.command ('!' + browser +" file://" + file_name);	
+
+def trac_search_view(b_preview):
+	line = vim.current.line
+
+	if (line.find('Ticket:>> ') != -1):
+		trac_ticket_view(line.replace('Ticket:>> ', ''))
+
+	elif (line.find('Wiki:>> ')!= -1):
+		if b_preview == False:
+			trac_wiki_view(line.replace('Wiki:>> ', ''))
+		else:
+			trac_html_view(line.replace('Wiki:>> ', ''))
+
+	elif (line.find('Changeset:>> ')!= -1):
+		trac_changeset_view(line.replace('Changeset:>> ', ''))
+
+def trac_changeset_view(changeset, b_full_path = False):
+	global trac
+	if b_full_path == True:
+		changeset = trac.wiki.server_url.replace('login/xmlrpc' , 'changeset/' + changeset)
+
+	trac.normal_mode()
+	vim.command ('split')
+	vim.command ('enew')
+	vim.command("setlocal buftype=nofile")
+	vim.command ('Nread ' + changeset + '?format=diff');
+	vim.command ('set ft=diff');
+

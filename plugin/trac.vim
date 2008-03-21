@@ -206,6 +206,8 @@ com! -nargs=1 TracBrowse python trac_open_browser(<f-args>)
 com! -nargs=0 TTPreview python trac_preview()
 com! -nargs=0 TWPreview python trac_preview()
 
+com! -nargs=1 TracChangesetView python trac_changeset_view(<f-args>, True)
+
 fun CompleteTracServers (A,L,P)
 	return keys(g:tracServerList) 
 endfun
