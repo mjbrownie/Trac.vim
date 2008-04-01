@@ -210,7 +210,7 @@ com! -nargs=0 TWDump python trac_preview(True)
 com! -nargs=1 TracChangesetView python trac_changeset_view(<f-args>, True)
 
 fun CompleteTracServers (A,L,P)
-	return keys(g:tracServerList) 
+	return filter (keys(g:tracServerList), 'v:val =~ "^'.a:A.'"')
 endfun
 
 let g:tracOptions = 1
@@ -218,50 +218,50 @@ let g:tracOptions = 1
 fun CompleteAttachments (A,L,P)
 	python trac_list_attachments()
 
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 "Command Complete
 fun CompleteMilestone  (A,L,P)
 	python trac_get_options(0)
 
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteType  (A,L,P)
 
 	python trac_get_options(1)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteStatus  (A,L,P)
 
 	python trac_get_options(2)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteResolution  (A,L,P)
 
 	python trac_get_options(3)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompletePriority  (A,L,P)
 	
 	python trac_get_options(4)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteSeverity  (A,L,P)
 
 	python trac_get_options(5)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteComponent  (A,L,P)
 	
 	python trac_get_options(6)
-	return split (g:tracOptions, '|' )
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 python trac_init()
