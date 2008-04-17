@@ -47,7 +47,7 @@
 "
 "               or
 "
-"               :TracServers <server name   - Sets the current trac Server
+"               :TServer <server name   - Sets the current trac Server
 "               (use tab complete) 
 "               :TracNormalView             - Close VimTrac to the normal View
 "
@@ -55,8 +55,8 @@
 "
 "               Trac Wiki Commands
 "
-"               :TracWikiView <WikiPage>    - Open the wiki View
-"               :TracSaveWiki "<Comment>"   - Saves the Active Wiki Page
+"               :TWView <WikiPage>    - Open the wiki View
+"               :TWSave "<Comment>"   - Saves the Active Wiki Page
 "
 "               In the Wiki TOC View Pages can be loaded by hitting <enter> 
 "
@@ -118,8 +118,8 @@ let g:tracDefaultComment = 'VimTrac update' " DEFAULT COMMENT CHANGE
 endif
 
 if !exists('g:tracHideTracWiki')
-let g:tracHideTracWiki = 'no' " SET TO yes/no IF YOU WANT TO HIDE 
-                               " ALL THE INTERNAL TRAC WIKI PAGES (^Wiki*/^Trac*)
+	let g:tracHideTracWiki = 'yes' " SET TO yes/no IF YOU WANT TO HIDE 
+                                   " ALL THE INTERNAL TRAC WIKI PAGES (^Wiki*/^Trac*)
 endif
 
 if !exists('g:tracTempHtml')
@@ -143,7 +143,7 @@ endif
 
 "Leader Short CUTS
 map <leader>to <esc>:TracWikiView<cr>
-map <leader>tw <esc>:TracSaveWiki<cr>
+map <leader>tw <esc>:TWSave<cr>
 map <leader>tq <esc>:TracNormalView<cr>
 map <leader>tt :python trac_window_resize()<cr>
 map <leader>tp :python trac_preview()<cr>
@@ -174,40 +174,53 @@ if !has("python")
     finish
 endif
 
-com! -nargs=? TracWikiView   python trac_wiki_view  (<f-args>)
-com! -nargs=? TracTicketView python trac_ticket_view  (<f-args>)
-com! -nargs=0 TracNormalView python trac_normal_view(<f-args>)
-com! -nargs=* TracSaveWiki   python trac_save_wiki  (<q-args>)
-com! -nargs=? TracCreateWiki python trac_wiki_view  (<f-args>, True)
-com! -nargs=+ -complete=customlist,CompleteTracServers TracServer python trac_server  (<q-args>)
-com! -nargs=+ TracSearch python trac_search(<q-args>)
+"Commmand Declarations
+"
+"NOTE: Due to the command list increasing as of version 0.3 of the plugin several command names 
+"have been renamed. The ':Trac' command prefix has been cut down to :T and the first inital of
+"the module eg :TW... for TracWiki commands :TT... for Trac ticket commands 
+"
+"The trac.py file no longer references these commands directly so you are free
+"to change them if they clash with another plugin.
+"
+com! -nargs=? -complete=customlist,CompleteWiki TWView   python trac.wiki_view  (<f-args>)
+com! -nargs=? TTView python trac.ticket_view  (<f-args>)
+com! -nargs=0 TClose python trac.normal_view(<f-args>)
+"NOTE: TWSave is referenced in trac.py
+com! -nargs=* TWSave   python trac.wiki.save(<q-args>)
+com! -nargs=? TWCreate python trac.wiki_view  (<f-args>, True)
+com! -nargs=+ -complete=customlist,CompleteTracServers TServer python trac.set_current_server  (<q-args>)
+com! -nargs=+ TSearch python trac.search_view(<q-args>)
 
 "Trac Ticket modifications
-com! -nargs=? -complete=customlist,CompleteMilestone TTSetMilestone python trac_set_ticket (<f-args>, 'milestone' )
-com! -nargs=? -complete=customlist,CompleteType TTSetType python trac_set_ticket (<f-args>, 'type' )
-com! -nargs=? -complete=customlist,CompleteStatus TTSetStatus python trac_set_ticket (<f-args>, 'status' )
-com! -nargs=? -complete=customlist,CompleteResolution TTSetResolution python trac_set_ticket (<f-args>, 'resolution' )
-com! -nargs=? -complete=customlist,CompletePriority TTSetPriority python trac_set_ticket (<f-args>, 'priority' )
-com! -nargs=? -complete=customlist,CompleteSeverity TTSetSeverity python trac_set_ticket (<f-args>, 'severity' )
-com! -nargs=? -complete=customlist,CompleteComponent TTSetComponent python trac_set_ticket (<f-args>, 'component' )
+com! -nargs=? -complete=customlist,CompleteMilestone  TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
+com! -nargs=? -complete=customlist,CompleteType       TTSetType       python trac.ticket.set_attr(<f-args>, 'type' )
+com! -nargs=? -complete=customlist,CompleteStatus     TTSetStatus     python trac.ticket.set_attr(<f-args>, 'status' )
+com! -nargs=? -complete=customlist,CompleteResolution TTSetResolution python trac.ticket.set_attr(<f-args>, 'resolution' )
+com! -nargs=? -complete=customlist,CompletePriority   TTSetPriority   python trac.ticket.set_attr(<f-args>, 'priority' )
+com! -nargs=? -complete=customlist,CompleteSeverity   TTSetSeverity   python trac.ticket.set_attr(<f-args>, 'severity' )
+com! -nargs=? -complete=customlist,CompleteComponent  TTSetComponent  python trac.ticket.set_attr(<f-args>, 'component' )
+com! -nargs=? TTSetOwner python trac.ticket.set_attr(<f-args>, 'owner' )
 
-com! -nargs=? -complete=file TTAddAttachment python trac_add_attachment(<f-args>)
-com! -nargs=? -complete=file TWAddAttachment python trac_add_attachment(<f-args>)
+com! -nargs=? -complete=file TTAddAttachment python trac.add_attachment(<f-args>)
+com! -nargs=? -complete=file TWAddAttachment python trac.add_attachment(<f-args>)
 
 
-com! -nargs=? -complete=customlist,CompleteAttachments TTGetAttachment python trac_get_attachment (<f-args>)
-com! -nargs=? -complete=customlist,CompleteAttachments TWGetAttachment python trac_get_attachment (<f-args>)
+com! -nargs=? -complete=customlist,CompleteAttachments TTGetAttachment python trac.get_attachment (<f-args>)
+com! -nargs=? -complete=customlist,CompleteAttachments TWGetAttachment python trac.get_attachment (<f-args>)
 
-com! -nargs=+ TTSetSummary python (<q-args>, 'summary')
-com! -nargs=0 TTAddComment python trac_add_comment()
-com! -nargs=+ TTCreateTicket python trac_create_ticket(<q-args>)
+com! -nargs=+ TTSetSummary   python (<q-args>, 'summary')
+com! -nargs=0 TTAddComment   python trac.ticket.add_comment()
+com! -nargs=+ TTCreateTicket python trac.ticket.create(<q-args>)
 
-com! -nargs=1 TracBrowse python trac_open_browser(<f-args>)
-com! -nargs=0 TTPreview python trac_preview()
-com! -nargs=0 TWPreview python trac_preview()
-com! -nargs=0 TWDump python trac_preview(True)
+"com! -nargs=1 TBrowse python trac_open_browser(<f-args>)
+com! -nargs=0 TTPreview python trac.preview()
+com! -nargs=0 TWPreview python trac.preview()
+com! -nargs=0 TWDump    python trac.preview(True)
 
-com! -nargs=1 TracChangesetView python trac_changeset_view(<f-args>, True)
+com! -nargs=1 TChangesetView python trac_changeset_view(<f-args>, True)
+
+com! -nargs=0 TTimelineView python trac.timeline_window.read_timeline() 
 
 fun CompleteTracServers (A,L,P)
 	return filter (keys(g:tracServerList), 'v:val =~ "^'.a:A.'"')
@@ -216,51 +229,56 @@ endfun
 let g:tracOptions = 1
 
 fun CompleteAttachments (A,L,P)
-	python trac_list_attachments()
+	python trac.list_attachments()
+
+	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+endfun
+
+fun CompleteWiki  (A,L,P)
+	python trac.wiki.get_options()
 
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 "Command Complete
 fun CompleteMilestone  (A,L,P)
-	python trac_get_options(0)
+	python trac.ticket.get_options(0)
 
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteType  (A,L,P)
 
-	python trac_get_options(1)
+	python trac.ticket.get_options(1)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteStatus  (A,L,P)
 
-	python trac_get_options(2)
+	python trac.ticket.get_options(2)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteResolution  (A,L,P)
 
-	python trac_get_options(3)
+	python trac.ticket.get_options(3)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompletePriority  (A,L,P)
 	
-	python trac_get_options(4)
+	python trac.ticket.get_options(4)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteSeverity  (A,L,P)
 
-	python trac_get_options(5)
+	python trac.ticket.get_options(5)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun CompleteComponent  (A,L,P)
-	
-	python trac_get_options(6)
+	python trac.ticket.get_options(6)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
