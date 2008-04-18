@@ -46,6 +46,8 @@ class VimWindow:
         self.prepare()
         if self.firstwrite == 1:
           self.firstwrite = 0
+          msg = msg.encode('ascii', 'ignore')
+          print type(msg)
           self.buffer[:] = str(msg).split('\n')
         else:
           self.buffer.append(str(msg).split('\n'))
@@ -99,10 +101,6 @@ class UI:
         if self.mode == 1: # is wiki mode ?
           return
         self.mode = 1
-        for i in range(1, len(vim.windows)+1):
-          vim.command(str(i)+'wincmd w')
-          self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
-                                                  # when buffer is not saved at all.
         self.create()
     def normal_mode(self):
         """ restore mode to normal """
@@ -120,7 +118,7 @@ class UI:
         #vim.command('source ' + self.sessfile)
         #os.system('rm -f ' + self.sessfile)
 
-        self.winbuf.clear()
+        #self.winbuf.clear()
         self.file    = None
         self.line    = None
         self.mode    = 0
@@ -213,7 +211,7 @@ class TracWikiUI(UI):
         self.wiki_attach_window = WikiAttachmentWindow()
         self.mode               = 0 #Initialised to default
         self.sessfile           = "/tmp/trac_vim_saved_session." + str(os.getpid())
-        self.winbuf             = {}
+        #self.winbuf             = {}
     def destroy(self):
         """ destroy windows """
         self.wikiwindow.destroy()
@@ -311,28 +309,16 @@ class TracSearchUI(UI):
         """ Initialize the User Interface """
         self.searchwindow = TracSearchWindow()
         self.mode       = 0 #Initialised to default
-        self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
-        self.winbuf     = {}
+        #self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
+        #self.winbuf     = {}
     def search_mode(self):
         """ Opens Search Window """
 
         if self.mode == 1: # is wiki mode ?
           return
         self.mode = 1
-        #if self.minibufexpl == 1:
-          #vim.command('CMiniBufExplorer')         # close minibufexplorer if it is open
-        # save session
-        #vim.command('mksession! ' + self.sessfile)
-        for i in range(1, len(vim.windows)+1):
-          vim.command(str(i)+'wincmd w')
-          self.winbuf[i] = vim.eval('bufnr("%")') # save buffer number, mksession does not do job perfectly
-                                                  # when buffer is not saved at all.
-        #vim.command('silent topleft new')       # create srcview window (winnr=1)
-        #for i in range(2, len(vim.windows)+1):
-        #  vim.command(str(i)+'wincmd w')
-        #  vim.command('hide')
         self.create()
-        vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
+        #vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
         self.cursign = '1'
     def destroy(self):
         """ destroy windows """
@@ -422,7 +408,7 @@ class TracTicket(TracRPC):
 
 
         str_ticket = "= Ticket Summary =\n\n"
-        str_ticket += "*   Ticket ID: " + ticket[0] +"\n" 
+        str_ticket += "*   Ticket ID: " + str(ticket[0]) +"\n" 
         str_ticket += "*      Status: " + ticket[3]["status"] + "\n" 
         str_ticket += "*     Summary: " + ticket[3]["summary"] + "\n"
         str_ticket += "*        Type: " + ticket[3]["type"] + "\n" 
@@ -545,8 +531,6 @@ class TracTicketUI (UI):
         self.tocwindow     = TicketTOContentsWindow()
         self.commentwindow = TicketCommentWindow()
         self.mode          = 0 #Initialised to default
-        self.sessfile      = "/tmp/trac_vim_saved_session." + str(os.getpid())
-        self.winbuf        = {}
     def destroy(self):
         """ destroy windows """
         self.ticketwindow.destroy()
@@ -599,7 +583,6 @@ class TracServerUI (UI):
     def __init__(self):
         self.serverwindow = ServerWindow()
         self.mode       = 0 #Initialised to default
-        self.winbuf     = {}
     def server_mode (self):
         """ Displays server mode """
         self.create()
@@ -620,27 +603,7 @@ class ServerWindow(VimWindow):
 ########################
 # Timeline Module
 ########################
-class TracTimelineUI(UI):
-    """ UI Manager for Timeline View """
-    def __init__(self):
-        self.timelinewindow = TracTimelineWindow()
-        self.mode  = 0
-    def create ():
-       self.timelinewindow.create("vertical belowright new")
-    def destroy ():
-        self.timelinewindow.destroy()
-class TracTimelineWindow(VimWindow):
-    """ RSS Feed Window """
-
-    def __init__(self, name = 'TIMELINE_WINDOW'):
-        VimWindow.__init__(self, name)
-    def on_create(self):
-        vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view("<cword>")<cr>')
-        vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
-        vim.command('vertical resize +70')
-        vim.command('setlocal syntax=wiki')
-        vim.command('setlocal linebreak')
-
+class TracTimeline:
     def read_timeline(self):
         """ Call the XML Rpc list """
         global trac 
@@ -654,16 +617,36 @@ class TracTimelineWindow(VimWindow):
 
         d = feedparser.parse("http://www.ascetinteractive.com.au/vimtrac/timeline?ticket=on&changeset=on&wiki=on&max=50&daysback=90&format=rss")
 
+        str_feed = ''
         for item in d['items']:
 
             #Each item is a dictionary mapping properties to values
-            str_feed = ''
             str_feed +=  "Update: "  + strftime("%Y-%m-%d %H:%M:%S", item.updated_parsed ) + "\n"
             str_feed +=  "RSS Item:" + item.title + "\n"
             str_feed +=  "Title:"    + item.link + "\n"
             str_feed += '*****************************************************************' + "\n"
 
         return str_feed
+class TracTimelineUI(UI):
+    """ UI Manager for Timeline View """
+    def __init__(self):
+        self.timeline_window = TracTimelineWindow()
+        self.mode  = 0
+    def create (self):
+       self.timeline_window.create("vertical belowright new")
+    def destroy (self):
+        self.timeline_window.destroy()
+class TracTimelineWindow(VimWindow):
+    """ RSS Feed Window """
+
+    def __init__(self, name = 'TIMELINE_WINDOW'):
+        VimWindow.__init__(self, name)
+    def on_create(self):
+        vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view("<cword>")<cr>')
+        vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
+        vim.command('vertical resize +70')
+        vim.command('setlocal syntax=wiki')
+        vim.command('setlocal linebreak')
 #########################
 # Main Class
 #########################
@@ -680,6 +663,7 @@ class Trac:
         self.wiki            = TracWiki(self.server_url)
         self.search          = TracSearch(self.server_url)
         self.ticket          = TracTicket(self.server_url)
+        self.timeline        = TracTimeline()
 
         self.uiwiki          = TracWikiUI()
         self.uiserver        = TracServerUI()
@@ -689,10 +673,8 @@ class Trac:
 
         self.user            = self.get_user(self.server_url)
 
-        self.timeline_window = TracTimelineWindow()
-
         vim.command('sign unplace *')
-    def wiki_view(self , page, b_create = False) :
+    def wiki_view(self , page = 'WikiStart', b_create = False) :
         """ Creates The Wiki View """
         if page == 'CURRENTLINE':
             page = vim.current.line
@@ -770,6 +752,12 @@ class Trac:
         self.uisearch.search_mode()
         self.uisearch.searchwindow.clean()
         self.uisearch.searchwindow.write(output_string)
+    def timeline_view(self):
+        self.normal_view()
+        output_string = self.timeline.read_timeline()
+        self.uitimeline.open()
+        self.uitimeline.timeline_window.clean()
+        self.uitimeline.timeline_window.write((output_string))
     def set_current_server (self, server_key, quiet = False):
         """ Sets the current server key """ 
         self.server_url = self.server_list[server_key]
@@ -834,7 +822,7 @@ class Trac:
             print "You need an active ticket or wiki open!"
         
         vim.command ('let g:tracOptions = "' + "|".join (option) + '"')
-    def preview (b_dump = False):
+    def preview (self, b_dump = False):
         ''' browser view of current wiki buffer '''
         global browser
 
