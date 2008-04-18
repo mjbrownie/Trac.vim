@@ -47,7 +47,6 @@ class VimWindow:
         if self.firstwrite == 1:
           self.firstwrite = 0
           msg = msg.encode('ascii', 'ignore')
-          print type(msg)
           self.buffer[:] = str(msg).split('\n')
         else:
           self.buffer.append(str(msg).split('\n'))
