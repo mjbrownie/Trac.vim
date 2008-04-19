@@ -1,0 +1,193 @@
+*trac.txt*
+
+                Vimtrac Usage Notes
+
+1. System Requirements                              |trac-requirements|
+2. Setup                                            |trac-setup|
+3. Server Selection                                 |trac-server|
+4. Wiki Viewing / Editing                           |trac-wiki-view|
+5. Trac Ticket View                                 |trac-ticket-view|
+6. Trac Search View                                 |trac-search-view|
+7. Changeset View                                   |trac-changeset-view|
+
+===================================================================================
+1. System Requirements                              *trac-requirements*
+
+You must have a working Trac repository version 0.10 or later complete with
+the xmlrpc plugin and a user with suitable access rights.
+
+Vim must be compiled with python support and your client must have python
+2.4.4 or later
+
+===================================================================================
+2. Setup                                            *trac-setup*
+
+"let g:tracServerList['(Server Name)'] = 'http://(user):(password)@(trac serverpath)/login/xmlrpc'
+
+===================================================================================
+3. Server Selection                                 *trac-server*
+
+                                                    *:TServer*
+:TServer [ServerName]
+
+Sets the current trac server where the
+The <tab> key will cycle through available servers.
+
+===================================================================================
+4. Wiki Viewing / Editing                           *trac-wiki-view*
+
+The Trac Wiki view is for browsing an editing a trac websites wiki pages.
+
+                                                    *:TWOpen*
+
+To open the wiki view use the command
+:TWOpen [OptionalWikiPage]
+
+If no page argument is given the plugin will open the main page WikiStart by
+default
+
+Browsing/Editing
+
+The WIKITOC_WINDOW will show a list of pages. Scrolling up and down and
+Pressing <return> on a page will open the selected page in the WIKI_WINDOW
+
+Pressing <space> over the page in the WIKITOC_WINDOW will display the page in
+a browser
+
+Trac sites usually have a bunch of in built pages Trac* or Wiki* you can hide
+these from view by setting the global variable in your vimrc.  let
+g:tracHideTracWiki = 'yes'
+
+At the moment this is done with a simple regexp so if you name your own pages
+Trac... or Wiki... they will not appear on the Table of Contents.
+
+You can also load a page by pressing the usual tag jump <c-]> to open the page
+under the cursor. At the moment theres no page name validation so it will
+throw an error if you try an open a nonexistant page.
+
+Adding/ Retrieving an Attachment                   *trac-wiki-attachments*
+
+:TWAddAttachment [file_path]                       *:TWAddAttachment*
+
+adds an attachment to the current active wiki page
+:TWGetAttachment [file]                            *:TWGetAttachment*
+
+gets an attachment from the active Wiki Page and save it to the current
+working directory.
+
+If a Wiki page opened contains attachments The Wiki Attachment window will
+appear. Attachments can be downloaded by hovering over the desired attachment
+and pressing <enter>
+
+HTML Preview
+
+:TPreview                                          *:TPreview*
+
+displays the current wiki in html preview (only tested on lynx set
+g:tracBrowser)
+
+You can also use the shortcut <leader>tp
+
+Committing pages to the Trac Site
+
+To save a page you can type in the command view 
+:TWSave [optional_wiki_update_comment]             *:TWSave*
+
+Alternatively you can quickly save a page with your regular :wq<cr> or :w<cr>
+which I've mapped to perform the TWSave? command.
+
+Exiting Trac Wiki View
+
+Exiting is done by either the command
+
+:TClose, :wq<cr> or :q<cr> in either of the wiki windows
+
+==============================================================================
+5. Trac Ticket View                                 *trac-ticket-view*
+
+The Trac ticket view is you browse trac tickets
+
+Opening
+
+:TTOpen [optional_ticket_id]                        *:TTOpen*
+
+Browsing
+
+You can scroll up and down the ticket list. Pressing enter will load the
+ticket id under the cursor.
+
+At the moment the ticket list is limited to tickets assigned to the
+login user. This might be annoying and I'll probably fix it later on.
+Until then you can modify the trac.py file on line 84.
+
+http://www.ascetinteractive.com.au/vimtrac/browser/trunk/plugin/tra
+c.py#L84
+
+Adding Comments
+
+The bottom right screen is for adding comments. To commit a comment
+either use :w<cr> or
+
+:TTAddComment                                       *:TTAddComment*
+
+Changing ticket states
+
+Trac current ticket option modifications (use tab complete)
+
+:TTSetMilestone [Milestone]                         *:TTSet*
+:TTSetType [Type]
+:TTSetStatus [Status]
+:TTSetResolution [Resolution]
+:TTSetPriority [Priority]
+:TTSetSeverity [Severity]
+:TTSetComponent [Component]
+:TTSetSummary [Summary]
+
+The setting will immediately be sent to the server.
+
+Creating Tickets
+
+This is still a bit of a hack. If you add a description in the
+TICKET_COMMENT window and type the command
+:TTCreateTicket [ticket_summary]
+
+A new ticket will be created with the default attributes (set in
+trac.ini)
+
+Adding/Retrieving attachments
+
+:TTAddAttachment [file_path]                        *TTAddAttachment*
+
+Adds a ticket to the current open ticket
+:TTGetAttachment [file]
+
+Retrieves an atteched file and saves it to the current working directory. File
+options for the current ticket may be viewed with <tab> completion.
+
+Exiting
+
+:TClose
+
+or :q<cr> in either of the Ticket windows will
+close the view
+
+================================================================================
+6. Trac Search View                             *trac-search-view*
+
+                                                *TSearch*
+:TSearch [search_term]
+
+Opening Trac Search View
+
+Will open search view containing matching wiki/ticket/changesets along with
+basic descrriptions
+
+================================================================================
+7. Changeset View                               *trac-changeset-view*
+
+:TChangesetOpen [changeset_id]                  *:TChangesetOpen*
+
+opens a unified diff changeset view in a split window
+
+You can also open a changeset by pressing <enter> on a matching
+Changeset:>> line in the Trac Seatch window
