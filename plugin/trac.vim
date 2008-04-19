@@ -28,7 +28,7 @@
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
 "  Last Change: 
 "          URL: 
-"      Version: 0.2.2
+"      Version: 0.3
 "
 "        Usage: 
 "
@@ -49,13 +49,13 @@
 "
 "               :TServer <server name   - Sets the current trac Server
 "               (use tab complete) 
-"               :TracNormalView             - Close VimTrac to the normal View
+"               :TClose             - Close VimTrac to the normal View
 "
 "               """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "
 "               Trac Wiki Commands
 "
-"               :TWView <WikiPage>    - Open the wiki View
+"               :TWOpen <WikiPage>    - Open the wiki View
 "               :TWSave "<Comment>"   - Saves the Active Wiki Page
 "
 "               In the Wiki TOC View Pages can be loaded by hitting <enter> 
@@ -74,7 +74,7 @@
 "
 "               Trac Ticket Commands
 "
-"               :TracTicketView <Ticket ID> - Open Trac Ticket Browser
+"               :TTOpen <Ticket ID> - Open Trac Ticket Browser
 "
 "               Trac current ticket option modifications (use tab complete)
 "
@@ -138,13 +138,20 @@ let g:tracServerList = {}
 
 "Add Server Repositories as Dictionary entries
 let g:tracServerList['Vim Trac']             = 'http://vimtracuser:wibble@www.ascetinteractive.com.au/vimtrac/login/xmlrpc'
+let g:tracServerList['(ServerName)']         = 'http://(User):(Pass)@(ServerPath)/login/xmlrpc'
 
 endif
 
+"Layouts can be modified here
+let g:tracWikiStyle     = 'top'    " 'bottom'
+let g:tracSearchStyle   = 'left'   " 'right'
+let g:tracTimelineStyle = 'left'   " 'right'
+let g:tracTicketStyle   = 'bottom' " 'top' 'left' right'
+
 "Leader Short CUTS
-map <leader>to <esc>:TracWikiView<cr>
+map <leader>to <esc>:TWOpen<cr>
 map <leader>tw <esc>:TWSave<cr>
-map <leader>tq <esc>:TracNormalView<cr>
+map <leader>tq <esc>:TClose<cr>
 map <leader>tt :python trac_window_resize()<cr>
 map <leader>tp :python trac_preview()<cr>
 
@@ -184,7 +191,7 @@ endif
 "to change them if they clash with another plugin.
 "
 "WIKI MODULE COMMANDS
-com! -nargs=? -complete=customlist,ComWiki        TWView          python trac.wiki_view  (<f-args>)
+com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
 "NOTE: TWSave is referenced in trac.py
 com! -nargs=*                                     TWSave          python trac.wiki.save(<q-args>)
 com! -nargs=?                                     TWCreate        python trac.wiki_view  (<f-args>, True)
@@ -196,10 +203,10 @@ com! -nargs=0                                     TWPreview       python trac.pr
 com! -nargs=0                                     TWDump          python trac.preview(True)
 
 "TICKET MODULE COMMANDS
-com! -nargs=?                                     TTView          python trac.ticket_view  (<f-args>)
+com! -nargs=?                                     TTOpen          python trac.ticket_view  (<f-args>)
 "Trac Ticket modifications
 com! -nargs=+                                     TTCreateTicket  python trac.ticket.create(<q-args>)
-com! -nargs=0                                     TAddComment     python trac.ticket.add_comment()
+com! -nargs=0                                     TTAddComment    python trac.ticket.add_comment()
 "Ticket Attributes
 com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
 com! -nargs=? -complete=customlist,ComType        TTSetType       python trac.ticket.set_attr(<f-args>, 'type' )
@@ -218,8 +225,8 @@ com! -nargs=0                                     TTPreview       python trac.pr
 
 "MISCELLANEOUS
 com! -nargs=+                                     TSearch         python trac.search_view(<q-args>)
-com! -nargs=1                                     TChangesetView  python trac.changeset_view(<f-args>, True)
-com! -nargs=0                                     TTimelineView   python trac.timeline_view()
+com! -nargs=1                                     TChangesetOpen  python trac.changeset_view(<f-args>, True)
+com! -nargs=0                                     TTimelineOpen   python trac.timeline_view()
 com! -nargs=0                                     TClose          python trac.normal_view(<f-args>)
 
 "FUNCTION COMPLETES
