@@ -125,8 +125,8 @@ c.py#L84
 
 Adding Comments
 
-The bottom right screen is for adding comments. To commit a comment
-either use :w<cr> or
+The TICKET_COMMENT window  is for adding comments. To commit a comment
+write the message first and then type 
 
 :TTAddComment                                       *:TTAddComment*
 
