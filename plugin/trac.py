@@ -218,8 +218,16 @@ class TracWikiUI(UI):
         self.wiki_attach_window.destroy()
     def create(self):
         """ create windows """
-        self.tocwindow.create("belowright new")
-        self.wikiwindow.create("vertical belowright new")
+        
+        style = vim.eval ('g:tracWikiStyle') 
+
+        if style == 'top':
+            self.wikiwindow.create("aboveleft new")
+            self.tocwindow.create("vertical aboveleft new")
+        else:
+            self.tocwindow.create("belowright new")
+            self.wikiwindow.create("vertical belowright new")
+
 class WikiWindow (VimWindow):
     """ Wiki Window """
     def __init__(self, name = 'WIKI_WINDOW'):
@@ -283,7 +291,6 @@ class TracSearch(TracRPC):
     """ Search for tickets and Wiki's """
     def __init__ (self, server_url):
         TracRPC.__init__(self, server_url)
-
     def search(self , search_pattern):
         """ Perform a search call  """
         a_search =  self.server.search.performSearch(search_pattern)
@@ -310,21 +317,17 @@ class TracSearchUI(UI):
         self.mode       = 0 #Initialised to default
         #self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
         #self.winbuf     = {}
-    def search_mode(self):
-        """ Opens Search Window """
-
-        if self.mode == 1: # is wiki mode ?
-          return
-        self.mode = 1
-        self.create()
-        #vim.command('2wincmd w') # goto srcview window(nr=1, top-left)
-        self.cursign = '1'
     def destroy(self):
         """ destroy windows """
         self.searchwindow.destroy()
     def create(self):
         """ create windows """
-        self.searchwindow.create("vertical belowright new")
+        style = vim.eval ('g:tracSearchStyle') 
+        if style == 'right':
+            self.searchwindow.create("vertical belowright new")
+        else:
+            self.searchwindow.create("vertical aboveleft new")
+
 class TracSearchWindow(VimWindow):
     """ for displaying search results """
     def __init__(self, name = 'SEARCH_WINDOW'):
@@ -378,7 +381,7 @@ class TracTicket(TracRPC):
         for ticket in self.server.ticket.query():
             multicall.ticket.get(ticket)
     
-        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n" 
+        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n\n" 
 
         for ticket in multicall():
             if ticket[3]["status"] != "closed":
@@ -537,9 +540,24 @@ class TracTicketUI (UI):
         self.commentwindow.destroy()
     def create(self):
         """ create windows """
-        self.tocwindow.create("vertical belowright new")
-        self.ticketwindow.create("belowright new")
-        self.commentwindow.create("belowright new")
+        style = vim.eval ('g:tracTicketStyle') 
+        if style == 'right':
+            self.tocwindow.create("vertical belowright new")
+            self.ticketwindow.create("belowright new")
+            self.commentwindow.create("belowright new")
+        elif style == 'left':
+            self.commentwindow.create("vertical aboveleft new")
+            self.ticketwindow.create("aboveleft new")
+            self.tocwindow.create(" aboveleft new")
+        elif style == 'top':
+            self.commentwindow.create("aboveleft new")
+            self.ticketwindow.create("vertical aboveleft new")
+            self.tocwindow.create("vertical aboveleft new")
+        elif style == 'bottom':
+            self.tocwindow.create("belowright new")
+            self.ticketwindow.create("vertical belowright new")
+            self.commentwindow.create("vertical belowright new")
+
 class TicketWindow (VimWindow):
     """ Ticket Window """
     def __init__(self, name = 'TICKET_WINDOW'):
@@ -613,17 +631,31 @@ class TracTimeline:
             return False;
 
         from time import strftime
+        import re
 
-        d = feedparser.parse("http://www.ascetinteractive.com.au/vimtrac/timeline?ticket=on&changeset=on&wiki=on&max=50&daysback=90&format=rss")
-
-        str_feed = ''
+        feed = trac.wiki.server_url.replace('login/xmlrpc' , 'timeline?ticket=on&changeset=on&wiki=on&max=50&daysback=90&format=rss')
+        d = feedparser.parse(feed)
+        str_feed = "(Hit <enter> or <space >on a line containing Ticket:>>)\n\n"
         for item in d['items']:
 
             #Each item is a dictionary mapping properties to values
             str_feed +=  "Update: "  + strftime("%Y-%m-%d %H:%M:%S", item.updated_parsed ) + "\n"
-            str_feed +=  "RSS Item:" + item.title + "\n"
-            str_feed +=  "Title:"    + item.link + "\n"
-            str_feed += '*****************************************************************' + "\n"
+
+            m = re.match(r"^Ticket #(\d+) (.*)$", item.title) 
+            if m != None: 
+                str_feed += "Ticket:>> " + m.group(1) + "\n" 
+                str_feed += m.group(2) + "\n"
+            m = re.match(r"^([\w\d]+) (edited by .*)$", item.title)
+            if m != None: 
+                str_feed += "Wiki:>> " + m.group(1) + "\n"
+                str_feed += m.group(2) + "\n"
+            m = re.match(r"^Changeset \[([\d]+)\]: (.*)$", item.title) 
+            if m != None: 
+                str_feed += "Changeset:>> " + m.group(1) + "\n"
+                str_feed += m.group(2) + "\n"
+
+            str_feed +=  "Link: "    + item.link + "\n"
+            str_feed += '-----------------------------------------------------------------' + "\n"
 
         return str_feed
 class TracTimelineUI(UI):
@@ -632,7 +664,12 @@ class TracTimelineUI(UI):
         self.timeline_window = TracTimelineWindow()
         self.mode  = 0
     def create (self):
-       self.timeline_window.create("vertical belowright new")
+       style = vim.eval ('g:tracTimelineStyle') 
+
+       if style == 'right':
+           self.timeline_window.create("vertical belowright new")
+       else:
+           self.timeline_window.create("vertical aboveleft new")
     def destroy (self):
         self.timeline_window.destroy()
 class TracTimelineWindow(VimWindow):
@@ -643,9 +680,11 @@ class TracTimelineWindow(VimWindow):
     def on_create(self):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view("<cword>")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
-        vim.command('vertical resize +70')
+        #vim.command('vertical resize +70')
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal linebreak')
+        vim.command('nnoremap <buffer> <cr> :python trac.search_open(False)<cr>')
+        vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>')
 #########################
 # Main Class
 #########################
@@ -697,8 +736,6 @@ class Trac:
         if (self.wiki.current_attachments != []):
             self.uiwiki.wiki_attach_window.create('vertical belowright new')
             self.uiwiki.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
-
-        #print 'Done.'
     def ticket_view(self ,id = False) :
         """ Creates The Ticket View """
 
@@ -748,7 +785,7 @@ class Trac:
         """  run a search """
         self.normal_view()
         output_string = self.search.search(keyword)
-        self.uisearch.search_mode()
+        self.uisearch.open()
         self.uisearch.searchwindow.clean()
         self.uisearch.searchwindow.write(output_string)
     def timeline_view(self):
@@ -853,14 +890,14 @@ class Trac:
         else:
             vim.command ('!' + browser +" file://" + file_name);    
     def changeset_view(self, changeset, b_full_path = False):
-        if b_full_path == True:
-            changeset = self.wiki.server_url.replace('login/xmlrpc' , 'changeset/' + changeset)
+        #if b_full_path == True:
+        changeset = self.wiki.server_url.replace('login/xmlrpc' , 'changeset/' + changeset)
 
         self.normal_view()
         vim.command ('split')
         vim.command ('enew')
         vim.command("setlocal buftype=nofile")
-        vim.command ('Nread ' + changeset + '?format=diff');
+        vim.command ('silent Nread ' + changeset + '?format=diff');
         vim.command ('set ft=diff');
 #########################
 # VIM API FUNCTIONS
@@ -893,6 +930,3 @@ def trac_window_resize():
         vim.command("wincmd |")
     if mode == 2:
         vim.command("wincmd _")
-def trac_timeline_view (days = 30):
-    trac.normal_view()
-    trac.wiki_view(name, True)
