@@ -226,7 +226,10 @@ com! -nargs=?                                     TTOpen          python trac.ti
 
 fun LoadTicketCommands()
     "Trac Ticket modifications
-    com! -nargs=+                                     TTCreateTicket  python trac.ticket.create(<q-args>)
+    com! -nargs=+                                     TTCreateTask        python trac.ticket.create(<q-args>, 'task')
+    com! -nargs=+                                     TTCreateDefect      python trac.ticket.create(<q-args>, 'defect')
+    com! -nargs=+                                     TTCreateEnhancement python trac.ticket.create(<q-args>, 'enhancement')
+
     com! -nargs=0                                     TTAddComment    python trac.ticket.add_comment()
     "Ticket Attributes
     com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
@@ -247,7 +250,9 @@ endfun
 
 fun UnloadTicketCommands()
     "Trac Ticket modifications
-    delc TTCreateTicket  
+    delc TTCreateTask 
+    delc TTCreateDefect
+    delc TTCreateEnhancement
     delc TTAddComment    
     "Ticket Attributes
     delc TTSetMilestone  

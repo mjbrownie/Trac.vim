@@ -452,10 +452,9 @@ class TracTicket(TracRPC):
     def updateTicket(self, comment, attribs = {}, notify = False):
         """ add ticket comments change attributes """
         return self.server.ticket.update(self.current_ticket_id,comment,attribs,notify)
-    def createTicket (self, description, summary):
+    def createTicket (self, description, summary, attributes = {}):
         """ create a trac ticket """
 
-        attributes = {}
         self.current_ticket_id =  self.server.ticket.create(summary, description, attributes, False)
     def addAttachment (self, file):
         ''' Add attachment '''
@@ -512,7 +511,7 @@ class TracTicket(TracRPC):
         trac.ticket.updateTicket(comment, attribs, False)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
-    def create(self, summary = 'new ticket'): 
+    def create(self, summary = 'new ticket', type = False): 
         """ writes comment window to a new  ticket  """
         global trac
 
@@ -521,12 +520,16 @@ class TracTicket(TracRPC):
             return 0
 
         description = trac.uiticket.commentwindow.dump()
-        attribs = {}
+
+        if type == False:
+            attribs = {}
+        else:
+            attribs = {'type':type}
 
         if description == '' or summary == '':
             print "Comment window and Summary should not be empty. Ticket needs more info"
 
-        trac.ticket.createTicket(description,summary )
+        trac.ticket.createTicket(description,summary , attribs)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
 class TracTicketUI (UI):
@@ -566,7 +569,6 @@ class TracTicketUI (UI):
             self.commentwindow.create("vertical belowright new")
 
         vim.command ("call LoadTicketCommands()")
-
 
 class TicketWindow (VimWindow):
     """ Ticket Window """
