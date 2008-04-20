@@ -524,7 +524,7 @@ class TracTicket(TracRPC):
         attribs = {}
 
         if description == '' or summary == '':
-            print "Comment window and Summary cannot be empty. Not creating ticket"
+            print "Comment window and Summary should not be empty. Ticket needs more info"
 
         trac.ticket.createTicket(description,summary )
         trac.uiticket.commentwindow.clean()
