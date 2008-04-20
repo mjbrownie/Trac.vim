@@ -677,6 +677,8 @@ class TracTimelineUI(UI):
 
        if style == 'right':
            self.timeline_window.create("vertical belowright new")
+       elif style == 'bottom':
+           self.timeline_window.create("belowright new")
        else:
            self.timeline_window.create("vertical aboveleft new")
     def destroy (self):
@@ -903,7 +905,7 @@ class Trac:
         changeset = self.wiki.server_url.replace('login/xmlrpc' , 'changeset/' + changeset)
 
         self.normal_view()
-        vim.command ('split')
+        vim.command ('belowright split')
         vim.command ('enew')
         vim.command("setlocal buftype=nofile")
         vim.command ('silent Nread ' + changeset + '?format=diff');

@@ -145,7 +145,7 @@ endif
 "Layouts can be modified here
 let g:tracWikiStyle     = 'top'    " 'bottom'
 let g:tracSearchStyle   = 'left'   " 'right'
-let g:tracTimelineStyle = 'left'   " 'right'
+let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
 let g:tracTicketStyle   = 'bottom' " 'top' 'left' right'
 
 "Leader Short CUTS
