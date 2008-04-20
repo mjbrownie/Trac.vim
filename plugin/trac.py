@@ -567,6 +567,7 @@ class TracTicketUI (UI):
 
         vim.command ("call LoadTicketCommands()")
 
+
 class TicketWindow (VimWindow):
     """ Ticket Window """
     def __init__(self, name = 'TICKET_WINDOW'):
@@ -644,7 +645,8 @@ class TracTimeline:
 
         feed = trac.wiki.server_url.replace('login/xmlrpc' , 'timeline?ticket=on&changeset=on&wiki=on&max=50&daysback=90&format=rss')
         d = feedparser.parse(feed)
-        str_feed = "(Hit <enter> or <space >on a line containing Ticket:>>)\n\n"
+        str_feed = "(Hit <enter> or <space >on a line containing Ticket:>>)\n"
+        str_feed += "(feed: " + feed + ")\n\n"
         for item in d['items']:
 
             #Each item is a dictionary mapping properties to values
@@ -766,6 +768,8 @@ class Trac:
         self.uiticket.ticketwindow.clean()
         if (id == False):
             self.uiticket.ticketwindow.write("Select Ticket To Load")
+            #This sets the cursor to the TOC if theres no active ticket
+            vim.command("wincmd h")
         else:
             self.uiticket.ticketwindow.write(self.ticket.getTicket(id))
             #self.ticket.listAttachments()
@@ -805,7 +809,7 @@ class Trac:
         self.uitimeline.open()
         self.uitimeline.timeline_window.clean()
         self.uitimeline.timeline_window.write((output_string))
-    def set_current_server (self, server_key, quiet = False):
+    def set_current_server (self, server_key, quiet = False, view = False):
         """ Sets the current server key """ 
         self.server_url = self.server_list[server_key]
         self.user = self.get_user(self.server_url)
@@ -819,7 +823,17 @@ class Trac:
         if quiet == False:
             print "SERVER SET TO : " + server_key
             trac.normal_view()
-            trac.wiki_view('WikiStart')
+           
+            #Set view to default or custom
+            if view == False:
+                view = vim.eval ('g:tracDefaultView') 
+
+            { 'wiki'   : self.wiki_view,
+            'ticket'   : self.ticket_view,
+            'timeline' : self.timeline_view
+            } [view]()
+
+            #trac.wiki_view('WikiStart')
     def get_user (self, server_url):
         #TODO fix for https
         return re.sub('http://(.*):.*$',r'\1',server_url)

@@ -191,7 +191,12 @@ endif
 "to change them if they clash with another plugin.
 "
 "WIKI MODULE COMMANDS
+
+let g:tracDefaultView = 'ticket' " 'ticket' 'timeline'
 com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.set_current_server  (<q-args>)
+com! -nargs=+ -complete=customlist,ComTracServers TServerTicket   python trac.set_current_server  (<q-args>, False, 'ticket')
+com! -nargs=+ -complete=customlist,ComTracServers TServerTimeline python trac.set_current_server  (<q-args>, False ,'timeline')
+
 com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
 "NOTE: TWSave is referenced in trac.py
 
