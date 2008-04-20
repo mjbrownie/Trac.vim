@@ -199,7 +199,7 @@ class TracWiki(TracRPC):
         fp.close()
 
         vim.command ('!' + browser +" file://" + file_name);    
-    def get_pages (self):
+    def get_options (self):
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
 class TracWikiUI(UI):
     """ Trac Wiki User Interface Manager """
@@ -216,9 +216,13 @@ class TracWikiUI(UI):
         self.wikiwindow.destroy()
         self.tocwindow.destroy()
         self.wiki_attach_window.destroy()
-    def create(self):
-        """ create windows """
+
+        vim.command ("call UnloadWikiCommands()")
         
+    def create(self):
+        """ create windows  and load the internal Commands """
+        
+        vim.command ("call LoadWikiCommands()")
         style = vim.eval ('g:tracWikiStyle') 
 
         if style == 'top':
@@ -535,6 +539,9 @@ class TracTicketUI (UI):
         self.mode          = 0 #Initialised to default
     def destroy(self):
         """ destroy windows """
+        
+        vim.command ("call UnloadTicketCommands()")
+
         self.ticketwindow.destroy()
         self.tocwindow.destroy()
         self.commentwindow.destroy()
@@ -557,6 +564,8 @@ class TracTicketUI (UI):
             self.tocwindow.create("belowright new")
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
+
+        vim.command ("call LoadTicketCommands()")
 
 class TicketWindow (VimWindow):
     """ Ticket Window """

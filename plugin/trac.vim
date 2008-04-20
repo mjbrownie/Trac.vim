@@ -191,37 +191,74 @@ endif
 "to change them if they clash with another plugin.
 "
 "WIKI MODULE COMMANDS
+com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.set_current_server  (<q-args>)
 com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
 "NOTE: TWSave is referenced in trac.py
-com! -nargs=*                                     TWSave          python trac.wiki.save(<q-args>)
-com! -nargs=?                                     TWCreate        python trac.wiki_view  (<f-args>, True)
-com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.set_current_server  (<q-args>)
-com! -nargs=? -complete=customlist,ComAttachments TWGetAttachment python trac.get_attachment (<f-args>)
-com! -nargs=? -complete=file                      TWAddAttachment python trac.add_attachment(<f-args>)
-"HTML Preview/Dumps
-com! -nargs=0                                     TWPreview       python trac.preview(False)
-com! -nargs=0                                     TWDump          python trac.preview(True)
+
+
+fun LoadWikiCommands()
+    com! -nargs=*                                     TWSave          python trac.wiki.save(<q-args>)
+    com! -nargs=?                                     TWCreate        python trac.wiki_view  (<f-args>, True)
+    com! -nargs=? -complete=customlist,ComAttachments TWGetAttachment python trac.get_attachment (<f-args>)
+    com! -nargs=? -complete=file                      TWAddAttachment python trac.add_attachment(<f-args>)
+    "HTML Preview/Dumps
+    com! -nargs=0                                     TWPreview       python trac.preview(False)
+    com! -nargs=0                                     TWDump          python trac.preview(True)
+endfun
+
+fun UnloadWikiCommands()
+    delc TWSave          
+    delc TWCreate        
+    delc TWGetAttachment 
+    delc TWAddAttachment 
+    delc TWPreview       
+    delc TWDump          
+endfun
+
 
 "TICKET MODULE COMMANDS
 com! -nargs=?                                     TTOpen          python trac.ticket_view  (<f-args>)
-"Trac Ticket modifications
-com! -nargs=+                                     TTCreateTicket  python trac.ticket.create(<q-args>)
-com! -nargs=0                                     TTAddComment    python trac.ticket.add_comment()
-"Ticket Attributes
-com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
-com! -nargs=? -complete=customlist,ComType        TTSetType       python trac.ticket.set_attr(<f-args>, 'type' )
-com! -nargs=? -complete=customlist,ComStatus      TTSetStatus     python trac.ticket.set_attr(<f-args>, 'status' )
-com! -nargs=? -complete=customlist,ComResolution  TTSetResolution python trac.ticket.set_attr(<f-args>, 'resolution' )
-com! -nargs=? -complete=customlist,ComPriority    TTSetPriority   python trac.ticket.set_attr(<f-args>, 'priority' )
-com! -nargs=? -complete=customlist,ComSeverity    TTSetSeverity   python trac.ticket.set_attr(<f-args>, 'severity' )
-com! -nargs=? -complete=customlist,ComComponent   TTSetComponent  python trac.ticket.set_attr(<f-args>, 'component' )
-com! -nargs=?                                     TTSetOwner      python trac.ticket.set_attr(<f-args>, 'owner' )
-com! -nargs=+                                     TTSetSummary    python (<q-args>, 'summary')
-"Ticket Attachments
-com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment python trac.get_attachment (<f-args>)
-com! -nargs=? -complete=file                      TTAddAttachment python trac.add_attachment(<f-args>)
-"Html Preview
-com! -nargs=0                                     TTPreview       python trac.preview()
+
+fun LoadTicketCommands()
+    "Trac Ticket modifications
+    com! -nargs=+                                     TTCreateTicket  python trac.ticket.create(<q-args>)
+    com! -nargs=0                                     TTAddComment    python trac.ticket.add_comment()
+    "Ticket Attributes
+    com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
+    com! -nargs=? -complete=customlist,ComType        TTSetType       python trac.ticket.set_attr(<f-args>, 'type' )
+    com! -nargs=? -complete=customlist,ComStatus      TTSetStatus     python trac.ticket.set_attr(<f-args>, 'status' )
+    com! -nargs=? -complete=customlist,ComResolution  TTSetResolution python trac.ticket.set_attr(<f-args>, 'resolution' )
+    com! -nargs=? -complete=customlist,ComPriority    TTSetPriority   python trac.ticket.set_attr(<f-args>, 'priority' )
+    com! -nargs=? -complete=customlist,ComSeverity    TTSetSeverity   python trac.ticket.set_attr(<f-args>, 'severity' )
+    com! -nargs=? -complete=customlist,ComComponent   TTSetComponent  python trac.ticket.set_attr(<f-args>, 'component' )
+    com! -nargs=?                                     TTSetOwner      python trac.ticket.set_attr(<f-args>, 'owner' )
+    com! -nargs=+                                     TTSetSummary    python (<q-args>, 'summary')
+    "Ticket Attachments
+    com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment python trac.get_attachment (<f-args>)
+    com! -nargs=? -complete=file                      TTAddAttachment python trac.add_attachment(<f-args>)
+    "Html Preview
+    com! -nargs=0                                     TTPreview       python trac.preview()
+endfun
+
+fun UnloadTicketCommands()
+    "Trac Ticket modifications
+    delc TTCreateTicket  
+    delc TTAddComment    
+    "Ticket Attributes
+    delc TTSetMilestone  
+    delc TTSetStatus     
+    delc TTSetResolution 
+    delc TTSetPriority   
+    delc TTSetSeverity   
+    delc TTSetComponent  
+    delc TTSetOwner      
+    delc TTSetSummary    
+    "Ticket Attachments
+    delc TTGetAttachment 
+    delc TTAddAttachment 
+    "Html Preview
+    delc TTPreview       
+endfun
 
 "MISCELLANEOUS
 com! -nargs=+                                     TSearch         python trac.search_view(<q-args>)
