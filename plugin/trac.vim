@@ -247,6 +247,7 @@ fun UnloadTicketCommands()
     "Ticket Attributes
     delc TTSetMilestone  
     delc TTSetStatus     
+    delc TTSetType
     delc TTSetResolution 
     delc TTSetPriority   
     delc TTSetSeverity   
