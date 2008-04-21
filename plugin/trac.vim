@@ -197,6 +197,11 @@ com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.se
 com! -nargs=+ -complete=customlist,ComTracServers TServerTicket   python trac.set_current_server  (<q-args>, False, 'ticket')
 com! -nargs=+ -complete=customlist,ComTracServers TServerTimeline python trac.set_current_server  (<q-args>, False ,'timeline')
 
+"QuickTicket Option
+com! -nargs=+ TQTaskOnVimTrac    python trac.ticket.create(<q-args> , 'task'        , 'Vim Trac')
+com! -nargs=+ TQDefectOnVimTrac  python trac.ticket.create(<q-args> , 'defect'      , 'Vim Trac')
+com! -nargs=+ TQEnhanceOnVimTrac python trac.ticket.create(<q-args> , 'enhancement' , 'Vim Trac')
+
 com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
 "NOTE: TWSave is referenced in trac.py
 
@@ -304,31 +309,26 @@ fun ComMilestone  (A,L,P)
 endfun
 
 fun ComType  (A,L,P)
-
 	python trac.ticket.get_options(1)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComStatus  (A,L,P)
-
 	python trac.ticket.get_options(2)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComResolution  (A,L,P)
-
 	python trac.ticket.get_options(3)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComPriority  (A,L,P)
-	
 	python trac.ticket.get_options(4)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComSeverity  (A,L,P)
-
 	python trac.ticket.get_options(5)
 	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun

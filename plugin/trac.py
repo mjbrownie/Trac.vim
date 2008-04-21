@@ -392,6 +392,8 @@ class TracTicket(TracRPC):
                 
                 str_ticket =  "\nTicket:>> " + str(ticket[0]) + "\n" 
                 str_ticket += " * Status: " + ticket[3]["status"]+ "\n" 
+                str_ticket += " * Type: " + ticket[3]["type"]+ "\n" 
+                str_ticket += " * Owner: " + ticket[3]["owner"]+ "\n" 
                 str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n"
                 str_ticket += "--------------------------------------------"
 
@@ -511,15 +513,22 @@ class TracTicket(TracRPC):
         trac.ticket.updateTicket(comment, attribs, False)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
-    def create(self, summary = 'new ticket', type = False): 
+    def create(self, summary = 'new ticket', type = False, server = False): 
         """ writes comment window to a new  ticket  """
         global trac
 
-        if trac.uiticket.mode == 0:
+        #Used in quick tickets
+        if server != False:
+            trac.set_current_server(server,True, 'ticket')
+            description = ''
+        else:
+            description = trac.uiticket.commentwindow.dump()
+
+
+        if trac.uiticket.mode == 0 and server == False:
             print "Can't create a ticket when not in Ticket View"
             return 0
 
-        description = trac.uiticket.commentwindow.dump()
 
         if type == False:
             attribs = {}
