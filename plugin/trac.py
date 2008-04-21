@@ -384,17 +384,35 @@ class TracTicket(TracRPC):
         #for ticket in self.server.ticket.query("owner=" + owner):
         for ticket in self.server.ticket.query():
             multicall.ticket.get(ticket)
-    
-        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n\n" 
+
+        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n\n"
+
+        milestone = ''
 
         for ticket in multicall():
+
+
             if ticket[3]["status"] != "closed":
-                
-                str_ticket =  "\nTicket:>> " + str(ticket[0]) + "\n" 
-                str_ticket += " * Status: " + ticket[3]["status"]+ "\n" 
-                str_ticket += " * Type: " + ticket[3]["type"]+ "\n" 
-                str_ticket += " * Owner: " + ticket[3]["owner"]+ "\n" 
+                str_ticket = ''
+
+                #This wont work without ordering
+                #last_milestone = ticket[3]["milestone"]
+                #if milestone !=  last_milestone and last_milestone != '':
+                    #milestone = ticket[3]["milestone"]
+                    #str_ticket += "\n--------------------------------------------" + "\n"
+                    #str_ticket += 'MILESTONE: ' + milestone + "\n"
+                    #str_ticket += "--------------------------------------------" + "\n"
+
+                str_ticket +=  "\nTicket:>> " + str(ticket[0]) + "\n"
                 str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n"
+                str_ticket += " * Priority: " + ticket[3]["priority"]+ "\n"
+                str_ticket += "     * Status: " + ticket[3]["status"]+ "\n"
+                str_ticket += "     * Milestone: " + ticket[3]["milestone"]+ "\n"
+                str_ticket += "     * Type: " + ticket[3]["type"]+ "\n"
+                str_ticket += "     * Owner: " + ticket[3]["owner"]+ "\n    "
+                
+                str_ticket += "\n    ".join (ticket[3]["description"].split("\n")) + "\n" 
+                
                 str_ticket += "--------------------------------------------"
 
                 ticket_list += str_ticket
@@ -612,6 +630,8 @@ class TicketTOContentsWindow (VimWindow):
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal syntax=wiki')
+        vim.command('setlocal foldmethod=indent')
+        vim.command('setlocal nowrap')
         vim.command('silent norm ggf: <esc>')
 #########################
 # Trac Server (UI Not Implemented)
@@ -843,8 +863,6 @@ class Trac:
             'ticket'   : self.ticket_view,
             'timeline' : self.timeline_view
             } [view]()
-
-            #trac.wiki_view('WikiStart')
     def get_user (self, server_url):
         #TODO fix for https
         return re.sub('http://(.*):.*$',r'\1',server_url)
