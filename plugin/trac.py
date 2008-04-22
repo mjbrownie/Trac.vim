@@ -198,9 +198,10 @@ class TracWiki(TracRPC):
         fp.write (html) 
         fp.close()
 
-        vim.command ('!' + browser +" file://" + file_name);    
+        vim.command ('!' + browser +" file://" + file_name)    
     def get_options (self):
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
+
 class TracWikiUI(UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -209,7 +210,6 @@ class TracWikiUI(UI):
         self.tocwindow          = WikiTOContentsWindow()
         self.wiki_attach_window = WikiAttachmentWindow()
         self.mode               = 0 #Initialised to default
-        self.sessfile           = "/tmp/trac_vim_saved_session." + str(os.getpid())
         #self.winbuf             = {}
     def destroy(self):
         """ destroy windows """
@@ -231,7 +231,6 @@ class TracWikiUI(UI):
         else:
             self.tocwindow.create("belowright new")
             self.wikiwindow.create("vertical belowright new")
-
 class WikiWindow (VimWindow):
     """ Wiki Window """
     def __init__(self, name = 'WIKI_WINDOW'):
@@ -313,13 +312,13 @@ class TracSearch(TracRPC):
             str_result += "\n-------------------------------------------------"
 
         return str_result
+
 class TracSearchUI(UI):
     """ Seach UI manager """
     def __init__(self):
         """ Initialize the User Interface """
         self.searchwindow = TracSearchWindow()
         self.mode       = 0 #Initialised to default
-        #self.sessfile   = "/tmp/trac_vim_saved_session." + str(os.getpid())
         #self.winbuf     = {}
     def destroy(self):
         """ destroy windows """
@@ -331,7 +330,6 @@ class TracSearchUI(UI):
             self.searchwindow.create("vertical belowright new")
         else:
             self.searchwindow.create("vertical aboveleft new")
-
 class TracSearchWindow(VimWindow):
     """ for displaying search results """
     def __init__(self, name = 'SEARCH_WINDOW'):
@@ -441,6 +439,14 @@ class TracTicket(TracRPC):
         str_ticket += "*    Priority: " + ticket[3]["priority"] + "\n" 
         str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
         str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
+        #look for session files 
+        
+        sessfile = self.get_session_file() 
+        if os.path.isfile(sessfile) != False:
+            str_ticket += "*     Session: PRESENT \n"
+        else:
+            str_ticket += "*     Session: not present\n"
+
         str_ticket += "* Attachments: " + "\n"
         for attach in self.current_attachments:
             str_ticket += '               ' + attach
@@ -559,6 +565,55 @@ class TracTicket(TracRPC):
         trac.ticket.createTicket(description,summary , attribs)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
+    def session_save (self):
+        global trac
+
+        if self.current_ticket_id == False:
+            print "You need to have an active ticket"
+            return False
+
+        directory = vim.eval('g:tracSessionDirectory')   
+        if os.path.isfile(directory) != False:
+            print "Cant create session directory"
+            return False
+        
+        if os.path.isdir(directory) == False: 
+            os.mkdir(directory)
+
+        serverdir = re.sub (r'[^\w]', '', trac.server_name)
+
+        if os.path.isdir(directory +  '/' + serverdir) == False:
+            os.mkdir(directory + '/' + serverdir)
+
+        sessfile = directory + '/' + serverdir + "/vimsess." + self.current_ticket_id
+        vim.command('mksession! ' + sessfile )
+        print "Session file Created: " + sessfile
+    def session_load (self):
+        global trac
+        if self.current_ticket_id == False:
+            print "You need to have an active ticket"
+            return False
+
+        serverdir = re.sub (r'[^\w]', '', trac.server_name)
+        directory = vim.eval('g:tracSessionDirectory')   
+        sessfile = directory + '/' + serverdir + "/vimsess." + self.current_ticket_id
+
+        if os.path.isfile(sessfile) == False:
+            print "This ticket does not have a session: " + sessfile
+            return False
+            
+
+        vim.command('source ' + sessfile )
+        vim.command("bdelete TICKETTOC_WINDOW")
+        vim.command("bdelete TICKET_WINDOW")
+        vim.command("bdelete TICKET_COMMENT_WINDOW")
+        trac.ticket_view(self.current_ticket_id)
+    def get_session_file(self):
+        global trac
+
+        directory = vim.eval('g:tracSessionDirectory')   
+        serverdir = re.sub (r'[^\w]', '', trac.server_name)
+        return directory + '/' + serverdir + "/vimsess." + str (self.current_ticket_id)
 class TracTicketUI (UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -596,7 +651,6 @@ class TracTicketUI (UI):
             self.commentwindow.create("vertical belowright new")
 
         vim.command ("call LoadTicketCommands()")
-
 class TicketWindow (VimWindow):
     """ Ticket Window """
     def __init__(self, name = 'TICKET_WINDOW'):
@@ -700,6 +754,7 @@ class TracTimeline:
             str_feed += '-----------------------------------------------------------------' + "\n"
 
         return str_feed
+
 class TracTimelineUI(UI):
     """ UI Manager for Timeline View """
     def __init__(self):
@@ -739,6 +794,7 @@ class Trac:
 
         self.server_list     = server_list
         self.server_url      = server_list.values()[0]
+        self.server_name     = server_list.keys()[0]
 
         self.default_comment = comment
         
@@ -780,6 +836,7 @@ class Trac:
         if (self.wiki.current_attachments != []):
             self.uiwiki.wiki_attach_window.create('vertical belowright new')
             self.uiwiki.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
+
     def ticket_view(self ,id = False) :
         """ Creates The Ticket View """
 
@@ -842,7 +899,9 @@ class Trac:
         self.uitimeline.timeline_window.write((output_string))
     def set_current_server (self, server_key, quiet = False, view = False):
         """ Sets the current server key """ 
+
         self.server_url = self.server_list[server_key]
+        self.server_name = server_key
         self.user = self.get_user(self.server_url)
 
         self.wiki.setServer(self.server_url)

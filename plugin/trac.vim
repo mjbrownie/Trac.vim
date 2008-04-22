@@ -126,6 +126,10 @@ if !exists('g:tracTempHtml')
 	let g:tracTempHtml = '/tmp/trac_wiki.html'
 endif
 
+if !exists('g:tracSessionDirectory')
+	let g:tracSessionDirectory = '/root/.vimtrac_session'
+endif
+
 if !exists('g:tracBrowser')
 	let g:tracBrowser = 'lynx'         " For Setting up Browser view (terminal)
 	"let g:tracBrowser = 'firefox'     " For Setting up Browser view (linux gui  - not tested)
@@ -197,7 +201,7 @@ com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.se
 com! -nargs=+ -complete=customlist,ComTracServers TServerTicket   python trac.set_current_server  (<q-args>, False, 'ticket')
 com! -nargs=+ -complete=customlist,ComTracServers TServerTimeline python trac.set_current_server  (<q-args>, False ,'timeline')
 
-"QuickTicket Option
+"QuickTicket Option (modify this command for your own servers) - Note Ticket #12 
 com! -nargs=+ TQTaskOnVimTrac    python trac.ticket.create(<q-args> , 'task'        , 'Vim Trac')
 com! -nargs=+ TQDefectOnVimTrac  python trac.ticket.create(<q-args> , 'defect'      , 'Vim Trac')
 com! -nargs=+ TQEnhanceOnVimTrac python trac.ticket.create(<q-args> , 'enhancement' , 'Vim Trac')
@@ -251,6 +255,9 @@ fun LoadTicketCommands()
     com! -nargs=? -complete=file                      TTAddAttachment python trac.add_attachment(<f-args>)
     "Html Preview
     com! -nargs=0                                     TTPreview       python trac.preview()
+
+    com! -nargs=0                                     TTLoadTicketSession   python trac.ticket.session_load()
+    com! -nargs=0                                     TTSaveTicketSession   python trac.ticket.session_save()
 endfun
 
 fun UnloadTicketCommands()
