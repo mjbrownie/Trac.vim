@@ -127,7 +127,7 @@ if !exists('g:tracTempHtml')
 endif
 
 if !exists('g:tracSessionDirectory')
-	let g:tracSessionDirectory = '/root/.vimtrac_session'
+	let g:tracSessionDirectory = '~/.vimtrac_session'
 endif
 
 if !exists('g:tracBrowser')
