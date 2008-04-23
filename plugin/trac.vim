@@ -152,12 +152,12 @@ let g:tracSearchStyle   = 'left'   " 'right'
 let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
 let g:tracTicketStyle   = 'bottom' " 'top' 'left' right'
 
-"Leader Short CUTS
-map <leader>to <esc>:TWOpen<cr>
-map <leader>tw <esc>:TWSave<cr>
-map <leader>tq <esc>:TClose<cr>
-map <leader>tt :python trac_window_resize()<cr>
-map <leader>tp :python trac_preview()<cr>
+"Leader Short CUTS (Uncomment or add and customise to yout vimrc)
+" map <leader>to :TWOpen<cr>
+" map <leader>tw :TWSave<cr>
+" map <leader>tq :TClose<cr>
+" map <leader>tt :python trac_window_resize()<cr>
+" map <leader>tp :python trac_preview()<cr>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "End Configuration 
