@@ -127,7 +127,7 @@ if !exists('g:tracTempHtml')
 endif
 
 if !exists('g:tracSessionDirectory')
-	let g:tracSessionDirectory = '~/.vimtrac_session'
+	let g:tracSessionDirectory = expand ('$HOME') . '/.vimtrac_session'
 endif
 
 if !exists('g:tracBrowser')
@@ -196,7 +196,7 @@ endif
 "
 "WIKI MODULE COMMANDS
 
-let g:tracDefaultView = 'ticket' " 'ticket' 'timeline'
+let g:tracDefaultView = 'wiki' " 'ticket' 'timeline'
 com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.set_current_server  (<q-args>)
 com! -nargs=+ -complete=customlist,ComTracServers TServerTicket   python trac.set_current_server  (<q-args>, False, 'ticket')
 com! -nargs=+ -complete=customlist,ComTracServers TServerTimeline python trac.set_current_server  (<q-args>, False ,'timeline')
@@ -281,6 +281,8 @@ fun UnloadTicketCommands()
     delc TTAddAttachment 
     "Html Preview
     delc TTPreview       
+    TTLoadTicketSession   
+    TTSaveTicketSession   
 endfun
 
 "MISCELLANEOUS
