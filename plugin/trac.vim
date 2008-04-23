@@ -221,12 +221,14 @@ fun LoadWikiCommands()
 endfun
 
 fun UnloadWikiCommands()
-    delc TWSave          
-    delc TWCreate        
-    delc TWGetAttachment 
-    delc TWAddAttachment 
-    delc TWPreview       
-    delc TWDump          
+    try
+        delc TWSave          
+        delc TWCreate        
+        delc TWGetAttachment 
+        delc TWAddAttachment 
+        delc TWPreview       
+        delc TWDump          
+    endtry
 endfun
 
 
@@ -262,27 +264,29 @@ endfun
 
 fun UnloadTicketCommands()
     "Trac Ticket modifications
-    delc TTCreateTask 
-    delc TTCreateDefect
-    delc TTCreateEnhancement
-    delc TTAddComment    
-    "Ticket Attributes
-    delc TTSetMilestone  
-    delc TTSetStatus     
-    delc TTSetType
-    delc TTSetResolution 
-    delc TTSetPriority   
-    delc TTSetSeverity   
-    delc TTSetComponent  
-    delc TTSetOwner      
-    delc TTSetSummary    
-    "Ticket Attachments
-    delc TTGetAttachment 
-    delc TTAddAttachment 
-    "Html Preview
-    delc TTPreview       
-    TTLoadTicketSession   
-    TTSaveTicketSession   
+    try
+        delc TTCreateTask 
+        delc TTCreateDefect
+        delc TTCreateEnhancement
+        delc TTAddComment    
+        "Ticket Attributes
+        delc TTSetMilestone  
+        delc TTSetStatus     
+        delc TTSetType
+        delc TTSetResolution 
+        delc TTSetPriority   
+        delc TTSetSeverity   
+        delc TTSetComponent  
+        delc TTSetOwner      
+        delc TTSetSummary    
+        "Ticket Attachments
+        delc TTGetAttachment 
+        delc TTAddAttachment 
+        "Html Preview
+        delc TTPreview       
+        delc TTLoadTicketSession   
+        delc TTSaveTicketSession   
+    endtry
 endfun
 
 "MISCELLANEOUS

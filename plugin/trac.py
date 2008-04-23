@@ -389,7 +389,6 @@ class TracTicket(TracRPC):
 
         for ticket in multicall():
 
-
             if ticket[3]["status"] != "closed":
                 str_ticket = ''
 
@@ -409,6 +408,8 @@ class TracTicket(TracRPC):
                 str_ticket += "     * Type: " + ticket[3]["type"]+ "\n"
                 str_ticket += "     * Owner: " + ticket[3]["owner"]+ "\n    "
                 
+                if self.session_is_present(ticket[0]):
+                    str_ticket += "     * Session: PRESENT \n"
                 str_ticket += "\n    ".join (ticket[3]["description"].split("\n")) + "\n" 
                 
                 str_ticket += "--------------------------------------------"
@@ -441,8 +442,7 @@ class TracTicket(TracRPC):
         str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
         #look for session files 
         
-        sessfile = self.get_session_file() 
-        if os.path.isfile(sessfile) != False:
+        if self.session_is_present():
             str_ticket += "*     Session: PRESENT \n"
         else:
             str_ticket += "*     Session: not present\n"
@@ -585,7 +585,7 @@ class TracTicket(TracRPC):
         if os.path.isdir(directory +  '/' + serverdir) == False:
             os.mkdir(directory + '/' + serverdir)
 
-        sessfile = directory + '/' + serverdir + "/vimsess." + self.current_ticket_id
+        sessfile = directory + '/' + serverdir + "/vimsess." + str(self.current_ticket_id)
         vim.command('mksession! ' + sessfile )
         print "Session file Created: " + sessfile
     def session_load (self):
@@ -596,24 +596,35 @@ class TracTicket(TracRPC):
 
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
         directory = vim.eval('g:tracSessionDirectory')   
-        sessfile = directory + '/' + serverdir + "/vimsess." + self.current_ticket_id
+        sessfile = directory + '/' + serverdir + "/vimsess." + str(self.current_ticket_id)
 
         if os.path.isfile(sessfile) == False:
             print "This ticket does not have a session: " + sessfile
             return False
             
 
+        vim.command("bdelete TICKETTOC_WINDOW")
+        vim.command("bdelete TICKET_WINDOW")
+        vim.command("bdelete TICKET_COMMENT_WINDOW")
         vim.command('source ' + sessfile )
         vim.command("bdelete TICKETTOC_WINDOW")
         vim.command("bdelete TICKET_WINDOW")
         vim.command("bdelete TICKET_COMMENT_WINDOW")
         trac.ticket_view(self.current_ticket_id)
-    def get_session_file(self):
+    def get_session_file(self, id = False):
         global trac
+
+        if id == False:
+            id = self.current_ticket_id
 
         directory = vim.eval('g:tracSessionDirectory')   
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
-        return directory + '/' + serverdir + "/vimsess." + str (self.current_ticket_id)
+
+        return directory + '/' + serverdir + "/vimsess." + str (id)
+    def session_is_present(self, id = False):
+        sessfile = self.get_session_file(id) 
+        return  os.path.isfile(sessfile) 
+
 class TracTicketUI (UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
