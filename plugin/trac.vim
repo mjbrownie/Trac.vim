@@ -197,9 +197,9 @@ endif
 "WIKI MODULE COMMANDS
 
 let g:tracDefaultView = 'wiki' " 'ticket' 'timeline'
-com! -nargs=+ -complete=customlist,ComTracServers TServer         python trac.set_current_server  (<q-args>)
-com! -nargs=+ -complete=customlist,ComTracServers TServerTicket   python trac.set_current_server  (<q-args>, False, 'ticket')
-com! -nargs=+ -complete=customlist,ComTracServers TServerTimeline python trac.set_current_server  (<q-args>, False ,'timeline')
+com! -nargs=+ -complete=customlist,ComTracServers TWServer  python trac.set_current_server  (<q-args>)
+com! -nargs=+ -complete=customlist,ComTracServers TTServer  python trac.set_current_server  (<q-args>, False, 'ticket')
+com! -nargs=+ -complete=customlist,ComTracServers TTLServer python trac.set_current_server  (<q-args>, False ,'timeline')
 
 "QuickTicket Option (modify this command for your own servers) - Note Ticket #12 
 com! -nargs=+ TQTaskOnVimTrac    python trac.ticket.create(<q-args> , 'task'        , 'Vim Trac')
@@ -207,10 +207,10 @@ com! -nargs=+ TQDefectOnVimTrac  python trac.ticket.create(<q-args> , 'defect'  
 com! -nargs=+ TQEnhanceOnVimTrac python trac.ticket.create(<q-args> , 'enhancement' , 'Vim Trac')
 
 com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
-"NOTE: TWSave is referenced in trac.py
 
 
 fun LoadWikiCommands()
+    "NOTE: TWSave is referenced in trac.py
     com! -nargs=*                                     TWSave          python trac.wiki.save(<q-args>)
     com! -nargs=?                                     TWCreate        python trac.wiki_view  (<f-args>, True)
     com! -nargs=? -complete=customlist,ComAttachments TWGetAttachment python trac.get_attachment (<f-args>)
