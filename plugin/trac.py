@@ -481,7 +481,9 @@ class TracTicket(TracRPC):
     def createTicket (self, description, summary, attributes = {}):
         """ create a trac ticket """
 
+
         self.current_ticket_id =  self.server.ticket.create(summary, description, attributes, False)
+       
     def addAttachment (self, file):
         ''' Add attachment '''
         file_name = os.path.basename (file)
@@ -537,6 +539,29 @@ class TracTicket(TracRPC):
         trac.ticket.updateTicket(comment, attribs, False)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
+    def update_description(self):
+        """ Adds Comment window as a description to the current ticket """
+        global trac
+        
+        confirm = vim.eval('confirm("Overwrite Description?", "&Yes\n&No\n",2)') 
+        if int (confirm) == 2:
+            print "Cancelled."
+            return False
+
+        if trac.uiticket.mode == 0 or trac.ticket.current_ticket_id == False:
+            print "Cannot make changes when there is no current ticket is open in Ticket View"
+            return 0
+
+        comment = trac.uiticket.commentwindow.dump()
+        attribs = {'description': comment}
+
+        if comment == '':
+            print "Comment window is empty. Not adding to ticket"
+
+        trac.ticket.updateTicket('', attribs, False)
+        trac.uiticket.commentwindow.clean()
+        trac.ticket_view(trac.ticket.current_ticket_id)
+
     def create(self, summary = 'new ticket', type = False, server = False): 
         """ writes comment window to a new  ticket  """
         global trac
@@ -553,14 +578,18 @@ class TracTicket(TracRPC):
             print "Can't create a ticket when not in Ticket View"
             return 0
 
+        confirm = vim.eval('confirm("Create Ticket on ' + trac.server_name + '?", "&Yes\n&No\n",2)') 
+        if int (confirm) == 2:
+            print "Cancelled."
+            return False
 
         if type == False:
             attribs = {}
         else:
             attribs = {'type':type}
 
-        if description == '' or summary == '':
-            print "Comment window and Summary should not be empty. Ticket needs more info"
+        if description == '' :
+            print "Description is empty. Ticket needs more info"
 
         trac.ticket.createTicket(description,summary , attribs)
         trac.uiticket.commentwindow.clean()

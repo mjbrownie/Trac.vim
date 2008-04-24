@@ -252,6 +252,9 @@ fun LoadTicketCommands()
     com! -nargs=? -complete=customlist,ComComponent   TTSetComponent  python trac.ticket.set_attr(<f-args>, 'component' )
     com! -nargs=?                                     TTSetOwner      python trac.ticket.set_attr(<f-args>, 'owner' )
     com! -nargs=+                                     TTSetSummary    python (<q-args>, 'summary')
+
+    com! -nargs=0                                     TTUpdateDescrption python trac.ticket.update_description()
+
     "Ticket Attachments
     com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment python trac.get_attachment (<f-args>)
     com! -nargs=? -complete=file                      TTAddAttachment python trac.add_attachment(<f-args>)
