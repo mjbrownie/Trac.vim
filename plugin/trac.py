@@ -243,6 +243,7 @@ class WikiWindow (VimWindow):
         vim.command('nnoremap <buffer> :w<cr> :TWSave')
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal linebreak')
+        vim.command('setlocal noswapfile')
 class WikiTOContentsWindow (VimWindow):
     """ Wiki Table Of Contents """
     def __init__(self, name = 'WIKITOC_WINDOW'):
@@ -261,6 +262,7 @@ class WikiTOContentsWindow (VimWindow):
         vim.command('vertical resize 30')
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
+        vim.command('setlocal noswapfile')
 
     def on_write(self):
         if self.hide_trac_wiki == True:
@@ -287,6 +289,7 @@ class WikiAttachmentWindow(VimWindow):
         vim.command('vertical resize 30')
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
+        vim.command('setlocal noswapfile')
 ########################
 # Search Module
 ########################
@@ -341,6 +344,7 @@ class TracSearchWindow(VimWindow):
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal linebreak')
+        vim.command('setlocal noswapfile')
 ########################
 # Ticket Module
 ########################
@@ -351,6 +355,7 @@ class TracTicket(TracRPC):
         
         self.current_ticket_id = False
         self.a_option = []
+        self.a_tickets = []
     def setServer (self, url):
         self.server = xmlrpclib.ServerProxy(url)
         self.getOptions()
@@ -375,7 +380,7 @@ class TracTicket(TracRPC):
     def getAllTickets(self,owner):
         """ Gets a List of Ticket Pages """
         multicall = xmlrpclib.MultiCall(self.server)
-
+        
         if self.a_option == []:
             self.getOptions()
 
@@ -388,6 +393,8 @@ class TracTicket(TracRPC):
         milestone = ''
 
         for ticket in multicall():
+            
+            self.a_tickets.append(ticket)
 
             if ticket[3]["status"] != "closed":
                 str_ticket = ''
@@ -402,9 +409,16 @@ class TracTicket(TracRPC):
 
                 str_ticket +=  "\nTicket:>> " + str(ticket[0]) + "\n"
                 str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n"
-                str_ticket += " * Priority: " + ticket[3]["priority"]+ "\n"
+                str_ticket += "     * Priority: " + ticket[3]["priority"]+ "\n"
                 str_ticket += "     * Status: " + ticket[3]["status"]+ "\n"
-                str_ticket += "     * Milestone: " + ticket[3]["milestone"]+ "\n"
+                milestone =  ticket[3]["milestone"] 
+                if (milestone == ''):
+                    milestone = 'NOMILESTONE'
+                component =  ticket[3]["component"] 
+                if (component == ''):
+                    component = 'NOCOMPONENT'
+                str_ticket += "     * Component: " + component + "\n"
+                str_ticket += "     * Milestone: " + milestone + "\n"
                 str_ticket += "     * Type: " + ticket[3]["type"]+ "\n"
                 str_ticket += "     * Owner: " + ticket[3]["owner"]+ "\n    "
                 
@@ -483,7 +497,6 @@ class TracTicket(TracRPC):
 
 
         self.current_ticket_id =  self.server.ticket.create(summary, description, attributes, False)
-       
     def addAttachment (self, file):
         ''' Add attachment '''
         file_name = os.path.basename (file)
@@ -561,7 +574,6 @@ class TracTicket(TracRPC):
         trac.ticket.updateTicket('', attribs, False)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
-
     def create(self, summary = 'new ticket', type = False, server = False): 
         """ writes comment window to a new  ticket  """
         global trac
@@ -653,7 +665,7 @@ class TracTicket(TracRPC):
     def session_is_present(self, id = False):
         sessfile = self.get_session_file(id) 
         return  os.path.isfile(sessfile) 
-
+    
 class TracTicketUI (UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -696,6 +708,7 @@ class TicketWindow (VimWindow):
     def __init__(self, name = 'TICKET_WINDOW'):
         VimWindow.__init__(self, name)
     def on_create(self):
+        vim.command('setlocal noswapfile')
         #vim.command('nnoremap <buffer> <c-]> :python trac_ticket_view("CURRENTLINE") <cr>')
         #vim.command('resize +20')
         #vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
@@ -713,6 +726,7 @@ class TicketCommentWindow (VimWindow):
         vim.command('nnoremap <buffer> :wq<cr> :python trac.add_comment()<cr>:python trac.normal_view()<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal syntax=wiki')
+        vim.command('setlocal noswapfile')
 class TicketTOContentsWindow (VimWindow):
     """ Ticket Table Of Contents """
     def __init__(self, name = 'TICKETTOC_WINDOW'):
@@ -727,6 +741,7 @@ class TicketTOContentsWindow (VimWindow):
         vim.command('setlocal foldmethod=indent')
         vim.command('setlocal nowrap')
         vim.command('silent norm ggf: <esc>')
+        vim.command('setlocal noswapfile')
 #########################
 # Trac Server (UI Not Implemented)
 #########################
@@ -824,6 +839,7 @@ class TracTimelineWindow(VimWindow):
         vim.command('setlocal linebreak')
         vim.command('nnoremap <buffer> <cr> :python trac.search_open(False)<cr>')
         vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>')
+        vim.command('setlocal noswapfile')
 #########################
 # Main Class
 #########################
