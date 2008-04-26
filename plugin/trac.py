@@ -356,6 +356,8 @@ class TracTicket(TracRPC):
         self.current_ticket_id = False
         self.a_option = []
         self.a_tickets = []
+        self.filter = TracTicketFilter()
+
     def setServer (self, url):
         self.server = xmlrpclib.ServerProxy(url)
         self.getOptions()
@@ -377,26 +379,36 @@ class TracTicket(TracRPC):
             a_option.append(option)
 
         self.a_option =  a_option
-    def getAllTickets(self,owner):
+    def getAllTickets(self,owner, b_use_cache = False):
         """ Gets a List of Ticket Pages """
-        multicall = xmlrpclib.MultiCall(self.server)
         
         if self.a_option == []:
             self.getOptions()
+        
+        if b_use_cache:
+            tickets = self.a_tickets
+        else:
+            multicall = xmlrpclib.MultiCall(self.server)
+            #for ticket in self.server.ticket.query("owner=" + owner):
+            for ticket in self.server.ticket.query():
+                multicall.ticket.get(ticket)
+            tickets = multicall()
+            self.a_tickets = tickets
 
-        #for ticket in self.server.ticket.query("owner=" + owner):
-        for ticket in self.server.ticket.query():
-            multicall.ticket.get(ticket)
+        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n"
 
-        ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n\n"
-
+        if self.filter.filters != []:
+            ticket_list += "(filtered)\n"
+            i = 1
+            for filter in self.filter.filters:
+                ticket_list +=  str(i) + '. ' + filter['attr'] + ": " + filter['key'] + "\n"
+                i += 1
         milestone = ''
 
-        for ticket in multicall():
+        for ticket in tickets:
             
-            self.a_tickets.append(ticket)
 
-            if ticket[3]["status"] != "closed":
+            if ticket[3]["status"] != "closed" and self.filter.check(ticket):
                 str_ticket = ''
 
                 #This wont work without ordering
@@ -407,20 +419,20 @@ class TracTicket(TracRPC):
                     #str_ticket += 'MILESTONE: ' + milestone + "\n"
                     #str_ticket += "--------------------------------------------" + "\n"
 
-                str_ticket +=  "\nTicket:>> " + str(ticket[0]) + "\n"
-                str_ticket += " * Summary: " + ticket[3]["summary"]+ "\n"
-                str_ticket += "     * Priority: " + ticket[3]["priority"]+ "\n"
-                str_ticket += "     * Status: " + ticket[3]["status"]+ "\n"
+                str_ticket += "\nTicket:>> "      + str(ticket[0])        + "\n"
+                str_ticket += " * Summary: "      + ticket[3]["summary"]  + "\n"
+                str_ticket += "     * Priority: " + ticket[3]["priority"] + "\n"
+                str_ticket += "     * Status: "   + ticket[3]["status"]   + "\n"
                 milestone =  ticket[3]["milestone"] 
                 if (milestone == ''):
                     milestone = 'NOMILESTONE'
                 component =  ticket[3]["component"] 
                 if (component == ''):
                     component = 'NOCOMPONENT'
-                str_ticket += "     * Component: " + component + "\n"
-                str_ticket += "     * Milestone: " + milestone + "\n"
-                str_ticket += "     * Type: " + ticket[3]["type"]+ "\n"
-                str_ticket += "     * Owner: " + ticket[3]["owner"]+ "\n    "
+                str_ticket += "     * Component: " + component          + "\n"
+                str_ticket += "     * Milestone: " + milestone          + "\n"
+                str_ticket += "     * Type: "      + ticket[3]["type"]  + "\n"
+                str_ticket += "     * Owner: "     + ticket[3]["owner"] + "\n    "
                 
                 if self.session_is_present(ticket[0]):
                     str_ticket += "     * Session: PRESENT \n"
@@ -430,7 +442,7 @@ class TracTicket(TracRPC):
 
                 ticket_list += str_ticket
 
-        ticket_list += "\n\n\n\n\n\n"
+        ticket_list += "\n"
         return ticket_list
     def getTicket(self, id):
         """ Get Ticket Page """
@@ -444,14 +456,13 @@ class TracTicket(TracRPC):
 
         #ticket_options = self.server.ticket.getAvailableActions(id)
 
-
-
         str_ticket = "= Ticket Summary =\n\n"
-        str_ticket += "*   Ticket ID: " + str(ticket[0]) +"\n" 
-        str_ticket += "*      Status: " + ticket[3]["status"] + "\n" 
-        str_ticket += "*     Summary: " + ticket[3]["summary"] + "\n"
-        str_ticket += "*        Type: " + ticket[3]["type"] + "\n" 
-        str_ticket += "*    Priority: " + ticket[3]["priority"] + "\n" 
+        str_ticket += "*   Ticket ID: " + str(ticket[0])         + "\n"
+        str_ticket += "*       Owner: " + ticket[3]["owner"]     + "\n"
+        str_ticket += "*      Status: " + ticket[3]["status"]    + "\n"
+        str_ticket += "*     Summary: " + ticket[3]["summary"]   + "\n"
+        str_ticket += "*        Type: " + ticket[3]["type"]      + "\n"
+        str_ticket += "*    Priority: " + ticket[3]["priority"]  + "\n"
         str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
         str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
         #look for session files 
@@ -606,6 +617,8 @@ class TracTicket(TracRPC):
         trac.ticket.createTicket(description,summary , attribs)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
+    def close_ticket(self, comment):
+        self.updateTicket(comment, {'status': 'closed'})
     def session_save (self):
         global trac
 
@@ -665,7 +678,45 @@ class TracTicket(TracRPC):
     def session_is_present(self, id = False):
         sessfile = self.get_session_file(id) 
         return  os.path.isfile(sessfile) 
-    
+
+class TracTicketFilter:
+    def __init__(self):
+        self.filters = []
+    def add (self,  keyword,attribute, b_whitelist = True):
+        self.filters.append({'attr':attribute,'key':keyword,'whitelist':b_whitelist}) 
+        self.refresh_tickets()
+    def clear(self):
+        self.filters = []
+        self.refresh_tickets()
+    def delete (self, number):
+        number = int(number)
+        try: 
+            del self.filters[number -1]
+        except:
+            return False
+        self.refresh_tickets()
+    def list (self):
+        if self.filters == []:
+            return ''
+
+        i = 0 
+        str_list = "(Filter list)\n"
+        for filter in self.filters:
+            i+=1
+            str_list +=  str(i) + '. ' + filter['attr'] + ': ' + filter['key'] + "\n"
+
+        return str_list
+    def check (self, ticket):
+        for filter in self.filters:
+            if ticket[3][filter['attr']] == filter['key']:
+                if filter['whitelist'] == False:
+                    return False
+            else:
+                return False
+        return True
+    def refresh_tickets(self):
+        global trac
+        trac.ticket_view(trac.ticket.current_ticket_id, True)
 class TracTicketUI (UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -893,7 +944,7 @@ class Trac:
             self.uiwiki.wiki_attach_window.create('vertical belowright new')
             self.uiwiki.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
 
-    def ticket_view(self ,id = False) :
+    def ticket_view(self ,id = False, b_use_cache = False) :
         """ Creates The Ticket View """
 
         print 'Connecting...'
@@ -908,7 +959,7 @@ class Trac:
         self.normal_view()
         self.uiticket.open()
         self.uiticket.tocwindow.clean()
-        self.uiticket.tocwindow.write(self.ticket.getAllTickets(self.user))
+        self.uiticket.tocwindow.write(self.ticket.getAllTickets(self.user, b_use_cache))
         self.uiticket.ticketwindow.clean()
         if (id == False):
             self.uiticket.ticketwindow.write("Select Ticket To Load")
@@ -930,7 +981,7 @@ class Trac:
         line = vim.current.line
 
         if (line.find('Ticket:>> ') != -1):
-            self.ticket_view(line.replace('Ticket:>> ', ''))
+            self.ticket_view(line.replace(r'Ticket:>> *([\w\d]+) *.*$', '\1'))
 
         elif (line.find('Wiki:>> ')!= -1):
             if b_preview == False:

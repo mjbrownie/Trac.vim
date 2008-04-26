@@ -241,28 +241,45 @@ fun LoadTicketCommands()
     com! -nargs=+                                     TTCreateDefect      python trac.ticket.create(<q-args>, 'defect')
     com! -nargs=+                                     TTCreateEnhancement python trac.ticket.create(<q-args>, 'enhancement')
 
-    com! -nargs=0                                     TTAddComment    python trac.ticket.add_comment()
+    com! -nargs=0                                     TTAddComment        python trac.ticket.add_comment()
     "Ticket Attributes
-    com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone  python trac.ticket.set_attr(<f-args>, 'milestone' )
-    com! -nargs=? -complete=customlist,ComType        TTSetType       python trac.ticket.set_attr(<f-args>, 'type' )
-    com! -nargs=? -complete=customlist,ComStatus      TTSetStatus     python trac.ticket.set_attr(<f-args>, 'status' )
-    com! -nargs=? -complete=customlist,ComResolution  TTSetResolution python trac.ticket.set_attr(<f-args>, 'resolution' )
-    com! -nargs=? -complete=customlist,ComPriority    TTSetPriority   python trac.ticket.set_attr(<f-args>, 'priority' )
-    com! -nargs=? -complete=customlist,ComSeverity    TTSetSeverity   python trac.ticket.set_attr(<f-args>, 'severity' )
-    com! -nargs=? -complete=customlist,ComComponent   TTSetComponent  python trac.ticket.set_attr(<f-args>, 'component' )
-    com! -nargs=?                                     TTSetOwner      python trac.ticket.set_attr(<f-args>, 'owner' )
-    com! -nargs=+                                     TTSetSummary    python (<q-args>, 'summary')
+    com! -nargs=? -complete=customlist,ComMilestone   TTSetMilestone      python trac.ticket.set_attr(<f-args>, 'milestone' )
+    com! -nargs=? -complete=customlist,ComType        TTSetType           python trac.ticket.set_attr(<f-args>, 'type' )
+    com! -nargs=? -complete=customlist,ComStatus      TTSetStatus         python trac.ticket.set_attr(<f-args>, 'status' )
+    com! -nargs=? -complete=customlist,ComResolution  TTSetResolution     python trac.ticket.set_attr(<f-args>, 'resolution' )
+    com! -nargs=? -complete=customlist,ComPriority    TTSetPriority       python trac.ticket.set_attr(<f-args>, 'priority' )
+    com! -nargs=? -complete=customlist,ComSeverity    TTSetSeverity       python trac.ticket.set_attr(<f-args>, 'severity' )
+    com! -nargs=? -complete=customlist,ComComponent   TTSetComponent      python trac.ticket.set_attr(<f-args>, 'component' )
+    com! -nargs=?                                     TTSetOwner          python trac.ticket.set_attr(<f-args>, 'owner' )
+    com! -nargs=+                                     TTSetSummary        python (<q-args>, 'summary')
 
-    com! -nargs=0                                     TTUpdateDescrption python trac.ticket.update_description()
+    com! -nargs=0                                     TTUpdateDescrption  python trac.ticket.update_description()
+
+    com! -nargs=? -complete=customlist,ComMilestone   TTFilterMilestone   python trac.ticket.filter.add(<f-args>, 'milestone' )
+    com! -nargs=? -complete=customlist,ComType        TTFilterType        python trac.ticket.filter.add(<f-args>, 'type' )
+    com! -nargs=? -complete=customlist,ComStatus      TTFilterStatus      python trac.ticket.filter.add(<f-args>, 'status' )
+    com! -nargs=? -complete=customlist,ComResolution  TTFilterResolution  python trac.ticket.filter.add(<f-args>, 'resolution' )
+    com! -nargs=? -complete=customlist,ComPriority    TTFilterPriority    python trac.ticket.filter.add(<f-args>, 'priority' )
+    com! -nargs=? -complete=customlist,ComSeverity    TTFilterSeverity    python trac.ticket.filter.add(<f-args>, 'severity' )
+    com! -nargs=? -complete=customlist,ComComponent   TTFilterComponent   python trac.ticket.filter.add(<f-args>, 'component' )
+    com! -nargs=?                                     TTFilterOwner       python trac.ticket.filter.add(<f-args>, 'owner' )
+
+    com! -nargs=0                                     TTClearAllFilters   python trac.ticket.filter.clear()
+    com! -nargs=*                                     TTClearFilter       python trac.ticket.filter.delete(<f-args>)
+    com! -nargs=*                                     TTListFilters       python trac.ticket.filter.list()
+
 
     "Ticket Attachments
-    com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment python trac.get_attachment (<f-args>)
-    com! -nargs=? -complete=file                      TTAddAttachment python trac.add_attachment(<f-args>)
+    com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment     python trac.get_attachment (<f-args>)
+    com! -nargs=? -complete=file                      TTAddAttachment     python trac.add_attachment(<f-args>)
     "Html Preview
-    com! -nargs=0                                     TTPreview       python trac.preview()
+    com! -nargs=0                                     TTPreview           python trac.preview()
 
-    com! -nargs=0                                     TTLoadTicketSession   python trac.ticket.session_load()
-    com! -nargs=0                                     TTSaveTicketSession   python trac.ticket.session_save()
+    com! -nargs=0                                     TTLoadTicketSession python trac.ticket.session_load()
+    com! -nargs=0                                     TTSaveTicketSession python trac.ticket.session_save()
+
+    com! -nargs=*                                     TTCloseTicket       python trac.ticket.close_ticket(<q-args>)
+
 endfun
 
 fun UnloadTicketCommands()
@@ -282,13 +299,28 @@ fun UnloadTicketCommands()
         delc TTSetComponent  
         delc TTSetOwner      
         delc TTSetSummary    
+        
+        delc TTUpdateDescrption
+
+        delc TTFilterMilestone   
+        delc TTFilterType    
+        delc TTFilterStatus      
+        delc TTFilterResolution  
+        delc TTFilterPriority    
+        delc TTFilterSeverity    
+        delc TTFilterComponent   
+        delc TTFilterOwner       
+        delc TTClearFilter      
+        delc TTClearAllFilters
         "Ticket Attachments
-        delc TTGetAttachment 
-        delc TTAddAttachment 
+        delc TTGetAttachment     
+        delc TTAddAttachment     
         "Html Preview
-        delc TTPreview       
-        delc TTLoadTicketSession   
-        delc TTSaveTicketSession   
+        delc TTPreview           
+        delc TTLoadTicketSession 
+        delc TTSaveTicketSession 
+        delc TTCloseTicket       
+    
     endtry
 endfun
 
