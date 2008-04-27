@@ -1,8 +1,6 @@
 import os
 import sys
 import vim
-import socket
-import base64
 #import traceback
 import xmlrpclib
 import re
@@ -981,7 +979,7 @@ class Trac:
         line = vim.current.line
 
         if (line.find('Ticket:>> ') != -1):
-            self.ticket_view(line.replace(r'Ticket:>> *([\w\d]+) *.*$', '\1'))
+            self.ticket_view(line.replace('Ticket:>> ', ''))
 
         elif (line.find('Wiki:>> ')!= -1):
             if b_preview == False:
