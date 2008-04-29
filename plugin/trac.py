@@ -304,12 +304,12 @@ class TracSearch(TracRPC):
         for search in a_search:
             
             if search[0].find('/ticket/') != -1: 
-                str_result += "\nTicket:>> " + os.path.basename (search[0])
+                str_result += "\nTicket:>> " + os.path.basename (search[0])+ "\n    "
             if search[0].find('/wiki/')!= -1: 
-                str_result += "\nWiki:>> " + os.path.basename(search[0])
+                str_result += "\nWiki:>> " + os.path.basename(search[0]) + "\n    "
             if search[0].find('/changeset/')!= -1: 
-                str_result += "\nChangeset:>> " + search[0] #os.path.basename(search[0])
-            str_result += "\n" + search[4]
+                str_result += "\nChangeset:>> " + search[0]  + "\n    " #os.path.basename(search[0])
+            str_result += "\n    ".join (search[4].split("\n")) + "\n" 
             str_result += "\n-------------------------------------------------"
 
         return str_result
@@ -338,9 +338,10 @@ class TracSearchWindow(VimWindow):
     def on_create(self):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<cword>")<cr>')
         vim.command('nnoremap <buffer> <cr> :python trac.search_open(False)<cr>')
-        vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>')
+        #vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>') This messes folds
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal syntax=text')
+        vim.command('setlocal foldmethod=indent')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
 
