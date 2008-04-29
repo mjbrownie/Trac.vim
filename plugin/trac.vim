@@ -264,6 +264,9 @@ fun LoadTicketCommands()
     com! -nargs=? -complete=customlist,ComComponent   TTFilterComponent   python trac.ticket.filter.add(<f-args>, 'component' )
     com! -nargs=?                                     TTFilterOwner       python trac.ticket.filter.add(<f-args>, 'owner' )
 
+    com! -nargs=? -complete=customlist,ComMilestone   TTFilterNoMilestone python trac.ticket.filter.add('', 'milestone' )
+    com! -nargs=?                                     TTFilterNoOwner     python trac.ticket.filter.add('', 'owner' )
+
     com! -nargs=0                                     TTClearAllFilters   python trac.ticket.filter.clear()
     com! -nargs=*                                     TTClearFilter       python trac.ticket.filter.delete(<f-args>)
     com! -nargs=*                                     TTListFilters       python trac.ticket.filter.list()
@@ -320,7 +323,7 @@ fun UnloadTicketCommands()
         delc TTLoadTicketSession 
         delc TTSaveTicketSession 
         delc TTCloseTicket       
-    
+        delc TTListFilters  
     endtry
 endfun
 

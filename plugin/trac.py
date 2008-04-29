@@ -340,9 +340,18 @@ class TracSearchWindow(VimWindow):
         vim.command('nnoremap <buffer> <cr> :python trac.search_open(False)<cr>')
         vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
-        vim.command('setlocal syntax=wiki')
+        vim.command('setlocal syntax=text')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
+
+    def on_write (self):
+        #Basic Highlighting
+        vim.command('syntax reset')
+        vim.command('syn match Keyword /\w*:>> .*$/ contains=Title')
+        vim.command('syn match Title /\w*:>>/ contained')
+        #vim.command('highlight Title ctermbg=255 guibg=255')
+        vim.command('syn match SpecialKey /^-*$/')
+
 ########################
 # Ticket Module
 ########################
@@ -544,6 +553,7 @@ class TracTicket(TracRPC):
         comment = ''
         attribs = {value:option}
         trac.ticket.updateTicket(comment, attribs, False)
+        trac.ticket_view(trac.ticket.current_ticket_id, True)
     def add_comment(self):
         """ Adds Comment window comments to the current ticket """
         global trac
