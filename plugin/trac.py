@@ -485,8 +485,9 @@ class TracTicket(TracRPC):
             str_ticket += '               ' + attach
 
         str_ticket += "\n---------------------------------------------------\n" 
-        str_ticket += "= Description: =\n\n" 
-        str_ticket += ticket[3]["description"] + "\n" +"\n"
+        str_ticket += "= Description: =\n\n    " 
+        str_ticket += "\n    ".join (ticket[3]["description"].split("\n")) + "\n" 
+        #str_ticket += ticket[3]["description"] + "\n" +"\n"
 
         str_ticket += "= CHANGELOG =\n\n"
 
@@ -500,8 +501,9 @@ class TracTicket(TracRPC):
                     str_ticket += "      (" + change[1]  + ": modified description)\n\n"
                 
                 elif change[2] == 'comment':
-                    str_ticket += "      (" + change[1]  + ": comment)\n\n"
-                    str_ticket += change[4] + "\n\n"
+                    str_ticket += "      (" + change[1]  + ": comment)\n    "
+                    str_ticket += "\n    ".join (change[4].split("\n")) + "\n" 
+                    #str_ticket += change[4] + "\n\n"
                 elif change[2] == 'milestone':
                     str_ticket += "      (" + change[1] + ": milestone set to " + change[4] + ")\n\n"
                 else :
@@ -1026,9 +1028,10 @@ class Trac:
         
         self.user = self.get_user(self.server_url)
 
+        trac.normal_view()
+
         if quiet == False:
             print "SERVER SET TO : " + server_key
-            trac.normal_view()
            
             #Set view to default or custom
             if view == False:

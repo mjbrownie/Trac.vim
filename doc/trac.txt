@@ -2,210 +2,247 @@
 
                 Vimtrac Usage Notes
 
-1. System Requirements                                      |trac-requirements|
-2. Setup                                                    |trac-setup|
-3. Server Selection                                         |trac-server|
-4. Wiki Viewing / Editing                                   |trac-wiki-view|
-5. Trac Ticket View                                         |trac-ticket-view|
-6. Trac Search View                                         |trac-search-view|
-7. Changeset View                                           |trac-changeset-view|
-8. Timeline View                                            |trac-timeline-view|
+1. System Requirements                                  |trac-requirements|
+2. Setup                                                |trac-setup|
+3. Server Selection                                     |trac-server|
+4. Wiki Viewing / Editing                               |trac-wiki-view|
+    4.1 Wiki Browsing/Editing                           |trac-wiki-editing|
+    4.2. Adding/ Retrieving an Attachment               |trac-wiki-attachments|
+    4.3. HTML Preview                                   |trac-wiki-htmlpreview|
+    4.4. Saving Wiki's                                  |trac-wiki-save|
+5. Trac Ticket View                                     |trac-ticket-view|
+    5.1 Ticket Filters                                  |trac-ticket-filters|
+    5.2. Adding Comments                                |trac-ticket-comments|
+    5.3. Changing ticket states                         |trac-ticket-changes|
+    5.4. Creating Tickets                               |trac-ticket-create|
+    5.5. Adding/Retrieving attachments                  |trac-ticket-attachments|
+6. Trac Search View                                     |trac-search-view|
+7. Changeset View                                       |trac-changeset-view|
+8. Timeline View                                        |trac-timeline-view|
 ================================================================================
 1. System Requirements                                       *trac-requirements*
 
-You must have a working Trac repository version 0.10 or later complete with
-the xmlrpc plugin and a user with suitable access rights.
+    You must have a working Trac repository version 0.10 or later complete with
+    the xmlrpc plugin and a user with suitable access rights.
 
-Vim must be compiled with python support and your client must have python
-2.4.4 or later
+    Vim must be compiled with python support and your client must have python
+    2.4.4 or later
 
 ================================================================================
 2. Setup                                                            *trac-setup*
 
-"let g:tracServerList['(Server Name)'] = 'http://(user):(password)@(trac serverpath)/login/xmlrpc'
+    "let g:tracServerList['(Server Name)'] = 'http://(user):(password)@(trac serverpath)/login/xmlrpc'
 
 ================================================================================
 3. Server Selection                                                *trac-server*
 
                                               
-:TServer [ServerName]                                                 *:TServer*                  
-:TServerTicket [ServerName]                                      *TServerTicket*
-:TServerTimeline [ServerName]                                  *TServerTimeline*
+    :TWServer [ServerName]                                           *:TWServer*                  
+    :TTServer [ServerName]                                           *:TTServer*
+    :TTLServer [ServerName]                                         *:TTLServer*
 
-Sets the current trac server where the
-The <tab> key will cycle through available servers.
+    Sets the current trac server where the
+    The <tab> key will cycle through available servers.
 
-The ticket/timeline vaiations will open the respective views instead
+    The wiki (TW), ticket (TT) and timeline (TTL) vaiations will open the
+    respective views 
 ================================================================================
 4. Wiki Viewing / Editing                                       *trac-wiki-view*
 
-The Trac Wiki view is for browsing an editing a trac websites wiki pages.
+    The Trac Wiki view is for browsing an editing a trac websites wiki pages.
 
                                                                        *:TWOpen*
 
-To open the wiki view use the command
-:TWOpen [OptionalWikiPage]
+    To open the wiki view use the command :TWOpen [OptionalWikiPage]
 
-If no page argument is given the plugin will open the main page WikiStart by
-default
+    If no page argument is given the plugin will open the main page WikiStart
+    by default
 
-Browsing/Editing
+4.1.  Browsing/Editing                                      *trac-wiki-editing*
 
-The WIKITOC_WINDOW will show a list of pages. Scrolling up and down and
-Pressing <return> on a page will open the selected page in the WIKI_WINDOW
+    The WIKITOC_WINDOW will show a list of pages. Scrolling up and down and
+    Pressing <return> on a page will open the selected page in the WIKI_WINDOW
 
-Pressing <space> over the page in the WIKITOC_WINDOW will display the page in
-a browser
+    Pressing <space> over the page in the WIKITOC_WINDOW will display the page
+    in a browser
 
-Trac sites usually have a bunch of in built pages Trac* or Wiki* you can hide
-these from view by setting the global variable in your vimrc.  let
-g:tracHideTracWiki = 'yes'
+    Trac sites usually have a bunch of in built pages Trac* or Wiki* you can
+    hide these from view by setting the global variable in your vimrc.  let
+    g:tracHideTracWiki = 'yes'
 
-At the moment this is done with a simple regexp so if you name your own pages
-Trac... or Wiki... they will not appear on the Table of Contents.
+    At the moment this is done with a simple regexp so if you name your own
+    pages Trac... or Wiki... they will not appear on the Table of Contents.
 
-You can also load a page by pressing the usual tag jump <c-]> to open the page
-under the cursor. At the moment theres no page name validation so it will
-throw an error if you try an open a nonexistant page.
+    You can also load a page by pressing the usual tag jump <c-]> to open the
+    page under the cursor. At the moment theres no page name validation so it
+    will throw an error if you try an open a nonexistant page.
 
-Adding/ Retrieving an Attachment                         *trac-wiki-attachments*
+4.2. Adding/ Retrieving an Attachment                    *trac-wiki-attachments*
 
 :TWAddAttachment [file_path]                                  *:TWAddAttachment*
 
-adds an attachment to the current active wiki page
+    adds an attachment to the current active wiki page
+
 :TWGetAttachment [file]                                       *:TWGetAttachment*
 
-gets an attachment from the active Wiki Page and save it to the current
-working directory.
+    gets an attachment from the active Wiki Page and save it to the current
+    working directory.
 
-If a Wiki page opened contains attachments The Wiki Attachment window will
-appear. Attachments can be downloaded by hovering over the desired attachment
-and pressing <enter>
+    If a Wiki page opened contains attachments The Wiki Attachment window will
+    appear. Attachments can be downloaded by hovering over the desired
+    attachment and pressing <enter>
 
-HTML Preview
+4.3. HTML Preview                                       *trac-wiki-htmlpreview*
 
-:TPreview                                                            *:TPreview*
+:TTPreview                                            *:TWPreview* *:TTPreview*
 
-displays the current wiki in html preview (only tested on lynx set
-g:tracBrowser)
+    displays the current wiki in html preview (only tested on lynx set
+    g:tracBrowser)
 
-You can also use the shortcut <leader>tp
+    You can also use the shortcut <leader>tp
 
-Committing pages to the Trac Site
+4.4. Saving Wiki's                                               *trac-wiki-save*
 
-To save a page you can type in the command view 
-:TWSave [optional_wiki_update_comment]                                 *:TWSave*
+    To save a page you can type in the command view 
+    :TWSave [optional_wiki_update_comment]                             *:TWSave*
 
-Alternatively you can quickly save a page with your regular :wq<cr> or :w<cr>
-which I've mapped to perform the TWSave? command.
+    Alternatively you can quickly save a page with your regular :wq<cr> or :w<cr>
+    which I've mapped to perform the TWSave? command.
 
-Exiting Trac Wiki View
+    Exiting Trac Wiki View
 
-Exiting is done by either the command
+    Exiting is done by either the command
 
-:TClose, :wq<cr> or :q<cr> in either of the wiki windows
+    :TClose, :wq<cr> or :q<cr> in either of the wiki windows
 
 ================================================================================
 5. Trac Ticket View                                           *trac-ticket-view*
 
-The Trac ticket view is you browse trac tickets
+    The Trac ticket view is you browse trac tickets
 
 Opening
 
-:TTOpen [optional_ticket_id]                                           *:TTOpen*
+    :TTOpen [optional_ticket_id]                                       *:TTOpen*
 
 Browsing
 
-You can scroll up and down the ticket list. Pressing enter will load the
-ticket id under the cursor.
+    You can scroll up and down the ticket list. Pressing enter will load the
+    ticket id under the cursor.
 
-At the moment the ticket list is limited to tickets assigned to the
-login user. This might be annoying and I'll probably fix it later on.
-Until then you can modify the trac.py file on line 84.
 
-http://www.ascetinteractive.com.au/vimtrac/browser/trunk/plugin/tra
-c.py#L84
+5.1 Filters                                               *trac-ticket-filters*
 
-Adding Comments
+    :TTFilterMilestone  [Milestone]                         *:TTFilterMilestone*
+    :TTFilterType       [Type]                                   *:TTFilterType*
+    :TTFilterStatus     [Status]                               *:TTFilterStatus*
+    :TTFilterResolution [Resolution                        *:TTFilterResolution*
+    :TTFilterPriority   [Priority]                           *:TTFilterPriority*
+    :TTFilterSeverity   [Severity]                           *:TTFilterSeverity*
+    :TTFilterComponent  [Component]                         *:TTFilterComponent*
+    :TTFilterOwner      [Owner]                                 *:TTFilterOwner*
 
-The TICKET_COMMENT window  is for adding comments. To commit a comment
-write the message first and then type 
+    Allows a tab complete option for filtering on respective ticket attributes. 
+
+    :TTFilterNoMilestone [NoMilestone]                    *:TTFilterNoMilestone*
+    :TTFilterNoOwner     [NoOwner]                            *:TTFilterNoOwner*
+    Special filters for tickets not owned or categorised
+
+    :TTClearAllFilters                                      *:TTClearAllFilters*
+        Resets the filter list to blank
+    :TTClearFilter [filter no]                                  *:TTClearFilter*
+        Filter numbers and descriptions are displayed at the top of the ticket
+        list. Using this filter will remove the filter number
+    :TTListFilters                                              *:TTListFilters*
+
+5.2. Adding Comments                                      *trac-ticket-comments*
+
+    The TICKET_COMMENT window  is for adding comments. To commit a comment write
+    the message first and then type 
 
 :TTAddComment                                                   *:TTAddComment*
 
-Changing ticket states
+5.3. Changing ticket states                                *trac-ticket-changes*
 
-Trac current ticket option modifications (use tab complete)
+    Trac current ticket option modifications (use tab complete)
 
-:TTSetMilestone [Milestone]                                            *:TTSet*
-:TTSetType [Type]
-:TTSetStatus [Status]
-:TTSetResolution [Resolution]
-:TTSetPriority [Priority]
-:TTSetSeverity [Severity]
-:TTSetComponent [Component]
-:TTSetSummary [Summary]
+    :TTSetMilestone  [Milestone]                                        *:TTSet*
+    :TTSetType       [Type]
+    :TTSetStatus     [Status]
+    :TTSetResolution [Resolution]
+    :TTSetPriority   [Priority]
+    :TTSetSeverity   [Severity]
+    :TTSetComponent  [Component]
+    :TTSetSummary    [Summary]
 
-The setting will immediately be sent to the server.
+    The setting will immediately be sent to the server.
 
-Creating Tickets
 
-This is still a bit of a hack. If you add a description in the
-TICKET_COMMENT window and type the command
-:TTCreateTask [ticket_summary]                                   *TTCreateTask*
-:TTCreateDefect [ticket_summary]                               *TTCreateDefect*
-:TTCreateEnhancement [ticket_summary]                     *TTCreateEnhancement*
+    :TTUpdateDescrption                                    *:TTUpdateDescrption*
 
-A new ticket will be created with the default attributes (set in
-trac.ini)
+    Takes the text from the TICKET_COMMENT_WINDOW and updates a tickets
+    description. It will prompt for confirmation before committing
 
-Adding/Retrieving attachments
+5.4. Creating Tickets                                       *trac-ticket-create*
 
-:TTAddAttachment [file_path]                                  *TTAddAttachment*
+    This is still a bit of a hack. If you add a description in the
+    TICKET_COMMENT window and type the command
 
-Adds a ticket to the current open ticket
-:TTGetAttachment [file]
+    :TTCreateTask        [ticket_summary]                         *TTCreateTask*
+    :TTCreateDefect      [ticket_summary]                       *TTCreateDefect*
+    :TTCreateEnhancement [ticket_summary]                  *TTCreateEnhancement*
 
-Retrieves an atteched file and saves it to the current working directory. File
-options for the current ticket may be viewed with <tab> completion.
+    A new ticket will be created with the default attributes (set in trac.ini).
+    When creating a ticket you can create a description initially in the
+    TICKET_COMMENT_WINDOW or alternatively you can add a description later
+    using |TTUpdateDescrption|.
 
-Exiting
+5.5. Adding/Retrieving attachments                    *trac-ticket-attachments*
 
-:TClose
+    :TTAddAttachment [file_path]                              *TTAddAttachment*
 
-or :q<cr> in either of the Ticket windows will
-close the view
+    Adds a ticket to the current open ticket
+    :TTGetAttachment [file]
+
+    Retrieves an atteched file and saves it to the current working directory.
+    File options for the current ticket may be viewed with <tab> completion.
+
+5.6. Exiting
+
+    :TClose
+
+    or :q<cr> in either of the Ticket windows will close the view
 
 ================================================================================
 6. Trac Search View                                           *trac-search-view*
 
                                                                        *TSearch*
-:TSearch [search_term]
+    :TSearch [search_term]
 
-Opening Trac Search View
+    Opening Trac Search View
 
-Will open search view containing matching wiki/ticket/changesets along with
-basic descrriptions
+    Will open search view containing matching wiki/ticket/changesets along with
+    basic descrriptions
 
 ================================================================================
 7. Changeset View                                          *trac-changeset-view*
 
-:TChangesetOpen [changeset_id]                                 *:TChangesetOpen*
+    :TChangesetOpen [changeset_id]                             *:TChangesetOpen*
 
-opens a unified diff changeset view in a split window
+    opens a unified diff changeset view in a split window
 
-You can also open a changeset by pressing <enter> on a matching
-Changeset:>> line in the Trac Seatch window
+    You can also open a changeset by pressing <enter> on a matching
+    Changeset:>> line in the Trac Seatch window
+
 ================================================================================
 8. Timeline View                                            *trac-timeline-view*
 
-Timeline view requires feedparser.py installed.
+    Timeline view requires feedparser.py installed.
 
-http://www.feedparser.org/
+    http://www.feedparser.org/
 
-The timeline view grabs the rss feed from a trac server.
+    The timeline view grabs the rss feed from a trac server.
 
-:TTimelineOpen                                                  *:TTimelineOpen*
+    :TTimelineOpen                                               *:TTimelineOpen*
 
-You can also open tickets, wikis and changesets by pressing <enter> on a matching
-Changeset:>>, Wiki:>> and Ticket:>> line
+    You can also open tickets, wikis and changesets by pressing <enter> on a
+    matching Changeset:>>, Wiki:>> and Ticket:>> line
