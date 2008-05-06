@@ -309,7 +309,7 @@ class TracSearch(TracRPC):
                 str_result += "\nWiki:>> " + os.path.basename(search[0]) + "\n    "
             if search[0].find('/changeset/')!= -1: 
                 str_result += "\nChangeset:>> " + search[0]  + "\n    " #os.path.basename(search[0])
-            str_result += "\n    ".join (search[4].split("\n")) + "\n" 
+            str_result += "\n    ".join (search[4].strip().split("\n")) + "\n" 
             str_result += "\n-------------------------------------------------"
 
         return str_result
@@ -408,9 +408,8 @@ class TracTicket(TracRPC):
         if self.filter.filters != []:
             ticket_list += "(filtered)\n"
             i = 1
-            for filter in self.filter.filters:
-                ticket_list +=  str(i) + '. ' + filter['attr'] + ": " + filter['key'] + "\n"
-                i += 1
+            ticket_list += self.filter.list()
+
         milestone = ''
 
         for ticket in tickets:
@@ -444,7 +443,7 @@ class TracTicket(TracRPC):
                 
                 if self.session_is_present(ticket[0]):
                     str_ticket += "     * Session: PRESENT \n"
-                str_ticket += "\n    ".join (ticket[3]["description"].split("\n")) + "\n" 
+                str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n" 
                 
                 str_ticket += "--------------------------------------------"
 
@@ -486,9 +485,7 @@ class TracTicket(TracRPC):
 
         str_ticket += "\n---------------------------------------------------\n" 
         str_ticket += "= Description: =\n\n    " 
-        str_ticket += "\n    ".join (ticket[3]["description"].split("\n")) + "\n" 
-        #str_ticket += ticket[3]["description"] + "\n" +"\n"
-
+        str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n" 
         str_ticket += "= CHANGELOG =\n\n"
 
         import datetime
@@ -502,7 +499,7 @@ class TracTicket(TracRPC):
                 
                 elif change[2] == 'comment':
                     str_ticket += "      (" + change[1]  + ": comment)\n    "
-                    str_ticket += "\n    ".join (change[4].split("\n")) + "\n" 
+                    str_ticket += "\n    ".join (change[4].strip().split("\n")) + "\n" 
                     #str_ticket += change[4] + "\n\n"
                 elif change[2] == 'milestone':
                     str_ticket += "      (" + change[1] + ": milestone set to " + change[4] + ")\n\n"
@@ -693,9 +690,10 @@ class TracTicket(TracRPC):
 class TracTicketFilter:
     def __init__(self):
         self.filters = []
-    def add (self,  keyword,attribute, b_whitelist = True):
+    def add (self,  keyword,attribute, b_whitelist = True, b_refresh_ticket = True):
         self.filters.append({'attr':attribute,'key':keyword,'whitelist':b_whitelist}) 
-        self.refresh_tickets()
+        if b_refresh_ticket == True:
+            self.refresh_tickets()
     def clear(self):
         self.filters = []
         self.refresh_tickets()
@@ -711,10 +709,13 @@ class TracTicketFilter:
             return ''
 
         i = 0 
-        str_list = "(Filter list)\n"
+        str_list = ""
         for filter in self.filters:
             i+=1
-            str_list +=  str(i) + '. ' + filter['attr'] + ': ' + filter['key'] + "\n"
+            is_whitelist = 'whitelist'
+            if (filter['whitelist'] == False):
+                is_whitelist = 'blacklist'
+            str_list +=  '    ' + str(i) + '. ' + filter['attr'] + ': ' + filter['key'] + " : " + is_whitelist + "\n"
 
         return str_list
     def check (self, ticket):
@@ -723,7 +724,8 @@ class TracTicketFilter:
                 if filter['whitelist'] == False:
                     return False
             else:
-                return False
+                if filter['whitelist'] == True:
+                    return False
         return True
     def refresh_tickets(self):
         global trac
