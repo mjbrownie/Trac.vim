@@ -222,13 +222,19 @@ class TracWikiUI(UI):
         
         vim.command ("call LoadWikiCommands()")
         style = vim.eval ('g:tracWikiStyle') 
-
+        
+        if style == 'full':
+            #vim.command('enew')
+            self.wikiwindow.create('new')
+            vim.command ("only")
+            self.tocwindow.create("vertical aboveleft new")
+            return False
         if style == 'top':
             self.wikiwindow.create("aboveleft new")
             self.tocwindow.create("vertical aboveleft new")
-        else:
-            self.tocwindow.create("belowright new")
-            self.wikiwindow.create("vertical belowright new")
+            return False
+        self.tocwindow.create("belowright new")
+        self.wikiwindow.create("vertical belowright new")
 class WikiWindow (VimWindow):
     """ Wiki Window """
     def __init__(self, name = 'WIKI_WINDOW'):
@@ -765,6 +771,11 @@ class TracTicketUI (UI):
             self.tocwindow.create("belowright new")
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
+        else:
+            self.tocwindow.create("belowright new")
+            vim.command('only')
+            self.ticketwindow.create("vertical  belowright 110 new")
+            self.commentwindow.create("belowright 15 new")
 
         vim.command ("call LoadTicketCommands()")
 class TicketWindow (VimWindow):
@@ -1116,11 +1127,13 @@ class Trac:
 
         
         if b_dump == True:
-            self.normal_view()
-            vim.command ('split')
+            #self.normal_view()
+            #vim.command ('split')
             vim.command ('enew')
+            vim.command ('setlocal buftype=nofile')
             vim.command ('r!lynx -dump ' + file_name );
             vim.command ('set ft=text');
+            vim.command ('norm gg');
         else:
             vim.command ('!' + browser +" file://" + file_name);    
     def changeset_view(self, changeset, b_full_path = False):
