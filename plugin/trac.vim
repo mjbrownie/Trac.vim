@@ -147,10 +147,10 @@ let g:tracServerList['(ServerName)']         = 'http://(User):(Pass)@(ServerPath
 endif
 
 "Layouts can be modified here
-let g:tracWikiStyle     = 'top'    " 'bottom'
+let g:tracWikiStyle     = 'full'    " 'bottom' 'top' 'full'
 let g:tracSearchStyle   = 'left'   " 'right'
 let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
-let g:tracTicketStyle   = 'bottom' " 'top' 'left' right'
+let g:tracTicketStyle   = 'full' " 'top' 'left' right' 'full'
 
 "Leader Short CUTS (Uncomment or add and customise to yout vimrc)
 " map <leader>to :TWOpen<cr>
