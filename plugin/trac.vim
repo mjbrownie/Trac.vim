@@ -251,7 +251,7 @@ fun LoadTicketCommands()
     com! -nargs=? -complete=customlist,ComSeverity    TTSetSeverity       python trac.ticket.set_attr(<f-args>, 'severity' )
     com! -nargs=? -complete=customlist,ComComponent   TTSetComponent      python trac.ticket.set_attr(<f-args>, 'component' )
     com! -nargs=?                                     TTSetOwner          python trac.ticket.set_attr(<f-args>, 'owner' )
-    com! -nargs=+                                     TTSetSummary        python (<q-args>, 'summary')
+    com! -nargs=+                                     TTSetSummary        python trac.ticket.set_summary(<q-args>)
 
     com! -nargs=0                                     TTUpdateDescrption  python trac.ticket.update_description()
 
