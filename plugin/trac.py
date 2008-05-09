@@ -243,6 +243,8 @@ class WikiWindow (VimWindow):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<C-R><C-W>")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('nnoremap <buffer> :wq<cr> :python trac.save_wiki('')<cr>:python trac.normal_view()<cr>')
+        #map gf to a new buffer (switching buffers doesnt work with nofile)
+        vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         vim.command('vertical resize +70')
         vim.command('nnoremap <buffer> :w<cr> :TWSave')
         vim.command('setlocal syntax=wiki')
@@ -692,6 +694,15 @@ class TracTicket(TracRPC):
     def session_is_present(self, id = False):
         sessfile = self.get_session_file(id) 
         return  os.path.isfile(sessfile) 
+    def set_summary(self, summary):
+        confirm = vim.eval('confirm("Overwrite Summary?", "&Yes\n&No\n",2)') 
+        if int (confirm) == 2:
+            print "Cancelled."
+            return False
+
+        attribs = {'summary': summary}
+        trac.ticket.updateTicket('', attribs, False)
+        
 
 class TracTicketFilter:
     def __init__(self):
