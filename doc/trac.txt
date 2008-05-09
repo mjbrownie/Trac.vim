@@ -16,6 +16,7 @@
     5.3. Changing ticket states                         |trac-ticket-changes|
     5.4. Creating Tickets                               |trac-ticket-create|
     5.5. Adding/Retrieving attachments                  |trac-ticket-attachments|
+    5.6  Ticket Sessions                                |trac-ticket-session|
 6. Trac Search View                                     |trac-search-view|
 7. Changeset View                                       |trac-changeset-view|
 8. Timeline View                                        |trac-timeline-view|
@@ -31,8 +32,12 @@
 ================================================================================
 2. Setup                                                            *trac-setup*
 
-    "let g:tracServerList['(Server Name)'] = 'http://(user):(password)@(trac serverpath)/login/xmlrpc'
+    You can create a list of trac servers using this format in your vimrc.
 
+    "let g:tracServerList['(Server Name)'] = 
+        \'http://(user):(password)@(trac serverpath)/login/xmlrpc'
+
+    
 ================================================================================
 3. Server Selection                                                *trac-server*
 
@@ -206,7 +211,24 @@ Browsing
     Retrieves an atteched file and saves it to the current working directory.
     File options for the current ticket may be viewed with <tab> completion.
 
-5.6. Exiting
+5.6. Ticket Sessions                                       *trac-ticket-session*
+
+    It's possible to associate a list of open files with a trac ticket on the
+    local server which can be handy for reopening tickets another day to make
+    further changes. 
+
+    Note: the plugin needs a directory to write to by default it is 
+	let g:tracSessionDirectory = expand ('$HOME') . '/.vimtrac_session'
+
+    TTSaveTicketSession                                    *TTSaveTicketSession*
+        Saves the open files and line numbers to the active ticket. You must
+        have a ticket open in the ticket view for this to take effect.
+
+    TTLoadTicketSession                                    *TTLoadTicketSession*
+
+        Loads the Tickets Session information
+
+5.7. Exiting
 
     :TClose
 
@@ -222,6 +244,9 @@ Browsing
 
     Will open search view containing matching wiki/ticket/changesets along with
     basic descrriptions
+
+    :TClose will close this view or a ticket/wiki view will open if an item is
+    selected
 
 ================================================================================
 7. Changeset View                                          *trac-changeset-view*
