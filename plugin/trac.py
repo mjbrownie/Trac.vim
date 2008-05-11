@@ -262,6 +262,7 @@ class WikiTOContentsWindow (VimWindow):
 
     def on_create(self):
         vim.command('nnoremap <buffer> <cr> :python trac.wiki_view("CURRENTLINE")<cr>')
+        vim.command('nnoremap <buffer> <2-LeftMouse> :python trac.wiki_view("CURRENTLINE")<cr>')
         vim.command('nnoremap <buffer> <Space> :python trac.html_view ()<cr><cr><cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal winwidth=30')
@@ -785,7 +786,7 @@ class TracTicketUI (UI):
         else:
             self.tocwindow.create("belowright new")
             vim.command('only')
-            self.ticketwindow.create("vertical  belowright 110 new")
+            self.ticketwindow.create("vertical  belowright 150 new")
             self.commentwindow.create("belowright 15 new")
 
         vim.command ("call LoadTicketCommands()")
@@ -800,6 +801,8 @@ class TicketWindow (VimWindow):
         #vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
         #vim.command('nnoremap <buffer> :wq<cr> :TracSaveTicket<cr>:TracNormalView<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
+        #map gf to a new buffer (switching buffers doesnt work with nofile)
+        vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         #vim.command('setlocal linebreak')
         vim.command('setlocal syntax=wiki')
 class TicketCommentWindow (VimWindow):
@@ -821,6 +824,7 @@ class TicketTOContentsWindow (VimWindow):
     def on_create(self):
         vim.command('nnoremap <buffer> <cr> :python trac.ticket_view  ("CURRENTLINE")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
+        vim.command('nnoremap <buffer> <2-LeftMouse> :python trac.ticket_view("CURRENTLINE")<cr>')
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal syntax=wiki')
