@@ -25,6 +25,7 @@ class VimWindow:
         self.name       = name
         self.buffer     = None
         self.firstwrite = 1
+        self.winnr      = 0
     def isprepared(self):
         """ check window is OK """
         if self.buffer == None or len(dir(self.buffer)) == 0 or self.getwinnr() == -1:
@@ -34,6 +35,7 @@ class VimWindow:
         """ check window is OK, if not then create """
         if not self.isprepared():
           self.create()
+
     def on_create(self):
         pass
     def getwinnr(self):
@@ -61,12 +63,12 @@ class VimWindow:
     def create(self, method = 'new'):
         """ create window """
         vim.command('silent ' + method + ' ' + self.name)
-        #if self.name != 'LOG___WINDOW':
         vim.command("setlocal buftype=nofile")
         self.buffer = vim.current.buffer
 
         self.width  = int( vim.eval("winwidth(0)")  )
         self.height = int( vim.eval("winheight(0)") )
+        self.winnr = self.getwinnr()
         self.on_create()
     def destroy(self):
         """ destroy window """
@@ -89,6 +91,14 @@ class VimWindow:
         if winnr != int(vim.eval("winnr()")):
           vim.command(str(winnr) + 'wincmd w')
         vim.command(cmd)
+    def set_focus(self):
+        """ Set focus on the current window """
+        vim.command( str(self.winnr) + ' wincmd w')
+    def resize_width(self, size = False):
+        self.set_focus()
+        if size  == False:
+            size = self.width
+        vim.command('vertical resize ' + str(size))
 class UI:
     """ User Interface Base Class """
     def __init__(self):
@@ -208,23 +218,19 @@ class TracWiki(TracRPC):
     def get_options (self):
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
     def vim_diff(self, revision = None):
+        global trac
         #default to previous revision
         if revision == None:
             revision = self.revision - 1
-        msg = self.getPage(self.currentPage, False, revision) 
-        msg = msg.encode('ascii', 'ignore')
     
-        file_name = vim.eval ('g:tracTempHtml') 
-
-        fp = open(file_name , 'w')
-        fp.write (msg) 
-        fp.close()
-
-        vim.command('vertical belowright diffsplit ' + file_name)
-        vim.command('setlocal noswapfile')
-        vim.command ('setlocal buftype=nofile')
-        vim.current.buffer[:] = str(msg).split('\n')
-
+        diffwindow = WikiVimDiffWindow()
+        diffwindow.create('vertical belowright diffsplit')
+        diffwindow.write(self.getPage(self.currentPage, False, revision))
+        trac.uiwiki.tocwindow.resize_width(30) 
+        trac.uiwiki.wikiwindow.set_focus()
+        #trac.uiwiki.wikiwindow.resize_width(int (trac.uiwiki.wikiwindow.width / 2)) 
+        diffwindow.resize_width(80) 
+        
 class TracWikiUI(UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -250,7 +256,7 @@ class TracWikiUI(UI):
         
         if style == 'full':
             #vim.command('enew')
-            self.wikiwindow.create('new')
+            self.wikiwindow.create(' 30 vnew')
             vim.command ("only")
             self.tocwindow.create("vertical aboveleft new")
             return False
@@ -322,6 +328,19 @@ class WikiAttachmentWindow(VimWindow):
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
+class WikiVimDiffWindow (VimWindow):
+    def __init__(self, name = 'WIKI_DIFF_WINDOW'):
+        VimWindow.__init__(self, name)
+    def on_create(self):
+        vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<C-R><C-W>")<cr>')
+        vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
+        #map gf to a new buffer (switching buffers doesnt work with nofile)
+        vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
+        vim.command('vertical resize +70')
+        vim.command('setlocal syntax=wiki')
+        vim.command('setlocal linebreak')
+        vim.command('setlocal noswapfile')
+
 ########################
 # Search Module
 ########################

@@ -218,6 +218,7 @@ fun LoadWikiCommands()
     "HTML Preview/Dumps
     com! -nargs=0                                     TWPreview       python trac.preview(False)
     com! -nargs=0                                     TWDump          python trac.preview(True)
+    com! -nargs=?                                     TWVimDiff       python trac.wiki.vim_diff(<f-args>)
 endfun
 
 fun UnloadWikiCommands()
@@ -228,6 +229,7 @@ fun UnloadWikiCommands()
         delc TWAddAttachment 
         delc TWPreview       
         delc TWDump          
+        delc TWVimDiff
     endtry
 endfun
 
