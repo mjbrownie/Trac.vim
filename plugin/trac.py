@@ -64,6 +64,7 @@ class VimWindow:
         #if self.name != 'LOG___WINDOW':
         vim.command("setlocal buftype=nofile")
         self.buffer = vim.current.buffer
+
         self.width  = int( vim.eval("winwidth(0)")  )
         self.height = int( vim.eval("winheight(0)") )
         self.on_create()
@@ -128,17 +129,21 @@ class TracWiki(TracRPC):
     def __init__ (self, server_url):
         TracRPC.__init__(self, server_url)
         self.a_pages = []
+        self.revision = 1
     def getAllPages(self):
         """ Gets a List of Wiki Pages """
         self.a_pages = self.server.wiki.getAllPages()
         return "\n".join(self.a_pages)
-    def getPage(self, name, b_create = False):
+    def getPage(self, name, b_create = False, revision = None):
         """ Get Wiki Page """
         global trac
 
         self.currentPage = name
         try:
-            wikitext = self.server.wiki.getPage(name)
+            if revision == None:
+                wikitext = self.server.wiki.getPage(name)
+            else:
+                wikitext = self.server.wiki.getPage(name,revision)
         except:
             wikitext = "Describe " + name + " here."
             if b_create == True:
@@ -158,7 +163,10 @@ class TracWiki(TracRPC):
         if comment == '':
             comment = trac.default_comment
         self.server.wiki.putPage(self.currentPage, trac.uiwiki.wikiwindow.dump() , {"comment" : comment})
-        
+    def get_page_info(self):
+        info = self.server.wiki.getPageInfo(self.currentPage)
+        self.revision = info['version']
+        return 'Page: ' + info['name'] + ' Revision: ' + str(info['version']) + ' Author: ' + info['author']
     def createPage (self, name, content, comment):
         """ Saves a Wiki Page """
         return self.server.wiki.putPage(name, content , {"comment" : comment})
@@ -199,6 +207,23 @@ class TracWiki(TracRPC):
         vim.command ('!' + browser +" file://" + file_name)    
     def get_options (self):
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
+    def vim_diff(self, revision = None):
+        #default to previous revision
+        if revision == None:
+            revision = self.revision - 1
+        msg = self.getPage(self.currentPage, False, revision) 
+        msg = msg.encode('ascii', 'ignore')
+    
+        file_name = vim.eval ('g:tracTempHtml') 
+
+        fp = open(file_name , 'w')
+        fp.write (msg) 
+        fp.close()
+
+        vim.command('vertical belowright diffsplit ' + file_name)
+        vim.command('setlocal noswapfile')
+        vim.command ('setlocal buftype=nofile')
+        vim.current.buffer[:] = str(msg).split('\n')
 
 class TracWikiUI(UI):
     """ Trac Wiki User Interface Manager """
@@ -832,6 +857,8 @@ class TicketTOContentsWindow (VimWindow):
         vim.command('setlocal nowrap')
         vim.command('silent norm ggf: <esc>')
         vim.command('setlocal noswapfile')
+        vim.command('setlocal winwidth=50')
+        vim.command('vertical resize 50')
 #########################
 # Trac Server (UI Not Implemented)
 #########################
@@ -977,12 +1004,14 @@ class Trac:
         self.uiwiki.wikiwindow.clean()
         self.uiwiki.wikiwindow.write(self.wiki.getPage(page, b_create))
 
+
         self.wiki.listAttachments();
 
         if (self.wiki.current_attachments != []):
             self.uiwiki.wiki_attach_window.create('vertical belowright new')
             self.uiwiki.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
 
+        print self.wiki.get_page_info()
     def ticket_view(self ,id = False, b_use_cache = False) :
         """ Creates The Ticket View """
 
