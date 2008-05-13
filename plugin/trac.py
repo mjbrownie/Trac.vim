@@ -333,7 +333,6 @@ class WikiVimDiffWindow (VimWindow):
         VimWindow.__init__(self, name)
     def on_create(self):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<C-R><C-W>")<cr>')
-        vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         #map gf to a new buffer (switching buffers doesnt work with nofile)
         vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         vim.command('vertical resize +70')
