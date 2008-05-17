@@ -142,6 +142,7 @@ class TracWiki(TracRPC):
         TracRPC.__init__(self, server_url)
         self.a_pages = []
         self.revision = 1
+        self.currentPage = False
     def getAllPages(self):
         """ Gets a List of Wiki Pages """
         self.a_pages = self.server.wiki.getAllPages()
@@ -151,6 +152,7 @@ class TracWiki(TracRPC):
         global trac
 
         self.currentPage = name
+
         try:
             if revision == None:
                 wikitext = self.server.wiki.getPage(name)
@@ -1014,7 +1016,14 @@ class Trac:
         self.user            = self.get_user(self.server_url)
 
         vim.command('sign unplace *')
-    def wiki_view(self , page = 'WikiStart', b_create = False) :
+    def wiki_view(self , page = False, b_create = False) :
+
+        if page == False:
+            if self.wiki.currentPage == False:
+                page = 'WikiStart'
+            else:
+                page = self.wiki.currentPage
+
         """ Creates The Wiki View """
         if page == 'CURRENTLINE':
             page = vim.current.line
@@ -1111,6 +1120,8 @@ class Trac:
         """ Sets the current server key """ 
 
         self.ticket.current_ticket_id = False
+        self.wiki.currentPage = False
+
         self.server_url = self.server_list[server_key]
         self.server_name = server_key
         self.user = self.get_user(self.server_url)
