@@ -8,6 +8,7 @@ import re
 # RPC Base Class 
 ########################
 class TracRPC:
+    """ General xmlrpc RPC routines """
     def __init__ (self, server_url):
         self.server_url = server_url
         self.server = xmlrpclib.ServerProxy(server_url)
@@ -35,14 +36,16 @@ class VimWindow:
         """ check window is OK, if not then create """
         if not self.isprepared():
           self.create()
-
     def on_create(self):
+        """ On Create is used  by the VimWindow subclasses to define vim
+            mappings and buffer settings
+        """
         pass
     def getwinnr(self):
+        """ Returns the vim window number for wincmd calls """
         return int(vim.eval("bufwinnr('"+self.name+"')"))
-
     def write(self, msg):
-        """ append last """
+        """ write to a vim buffer """
         self.prepare()
         if self.firstwrite == 1:
           self.firstwrite = 0
@@ -52,16 +55,14 @@ class VimWindow:
           self.buffer.append(str(msg).split('\n'))
         self.command('normal gg')
         self.on_write()
-        #self.window.cursor = (len(self.buffer), 1)
     def on_write(self):
         ''' for vim commands after a write is made to a buffer '''
         pass
     def dump (self):
-        """ read buffer """
+        """ returns the contents buffer as a string """
         return "\n".join (self.buffer[:])
-
     def create(self, method = 'new'):
-        """ create window """
+        """ creates a  window """
         vim.command('silent ' + method + ' ' + self.name)
         vim.command("setlocal buftype=nofile")
         self.buffer = vim.current.buffer
@@ -95,17 +96,18 @@ class VimWindow:
         """ Set focus on the current window """
         vim.command( str(self.winnr) + ' wincmd w')
     def resize_width(self, size = False):
+        """ resizes to default width or specified size """
         self.set_focus()
         if size  == False:
             size = self.width
         vim.command('vertical resize ' + str(size))
+
 class UI:
     """ User Interface Base Class """
     def __init__(self):
         """ Initialize the User Interface """
-
     def open(self):
-        """ change mode to wiki """
+        """ change mode to a vim window view """
         if self.mode == 1: # is wiki mode ?
           return
         self.mode = 1
@@ -174,6 +176,7 @@ class TracWiki(TracRPC):
             comment = trac.default_comment
         self.server.wiki.putPage(self.currentPage, trac.uiwiki.wikiwindow.dump() , {"comment" : comment})
     def get_page_info(self):
+        """ Returns page revision info most recent author """
         info = self.server.wiki.getPageInfo(self.currentPage)
         self.revision = info['version']
         return 'Page: ' + info['name'] + ' Revision: ' + str(info['version']) + ' Author: ' + info['author']
@@ -197,10 +200,13 @@ class TracWiki(TracRPC):
         else:
             print "Will not overwrite existing file "  + file_name
     def listAttachments(self):
+        """ Look for attachments on the current page """
         self.current_attachments = self.server.wiki.listAttachments(self.currentPage)
     def getWikiHtml(self, wikitext):
+        """ Converts the wikitext from a buffer to html for previews """
         return self.server.wiki.wikiToHtml(wikitext)
     def html_view(self, page):
+        """ Displays a wiki in a preview browser as set in trac.vim """
         global browser
 
         if page == False:
@@ -216,8 +222,10 @@ class TracWiki(TracRPC):
 
         vim.command ('!' + browser +" file://" + file_name)    
     def get_options (self):
+        """ returns a list of a sites wiki pages for command completes """
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
     def vim_diff(self, revision = None):
+        """ Creates a vimdiff of an earlier wiki revision """
         global trac
         #default to previous revision
         if revision == None:
@@ -317,6 +325,7 @@ class WikiTOContentsWindow (VimWindow):
         vim.command('sort')
         vim.command('silent norm ggOWikiStart')
 class WikiAttachmentWindow(VimWindow):
+    """ Wiki's attachments """
     def __init__(self, name = 'WIKIATT_WINDOW'):
         VimWindow.__init__(self, name)
 
@@ -329,10 +338,12 @@ class WikiAttachmentWindow(VimWindow):
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
 class WikiVimDiffWindow (VimWindow):
+    """ For Earlier revisions """
     def __init__(self, name = 'WIKI_DIFF_WINDOW'):
         VimWindow.__init__(self, name)
     def on_create(self):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<C-R><C-W>")<cr>')
+        vim.command('nnoremap <buffer> :q!<cr> :python trac.uiwiki.tocwindow.resize_width(30)<cr>')
         #map gf to a new buffer (switching buffers doesnt work with nofile)
         vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         vim.command('vertical resize +70')
@@ -367,7 +378,7 @@ class TracSearch(TracRPC):
         return str_result
 
 class TracSearchUI(UI):
-    """ Seach UI manager """
+    """ Search UI manager """
     def __init__(self):
         """ Initialize the User Interface """
         self.searchwindow = TracSearchWindow()
@@ -388,6 +399,7 @@ class TracSearchWindow(VimWindow):
     def __init__(self, name = 'SEARCH_WINDOW'):
         VimWindow.__init__(self, name)
     def on_create(self):
+        """ Buffer Specific Mappings for The Search Window """
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<cword>")<cr>')
         vim.command('nnoremap <buffer> <cr> :python trac.search_open(False)<cr>')
         #vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>') This messes folds
@@ -396,9 +408,8 @@ class TracSearchWindow(VimWindow):
         vim.command('setlocal foldmethod=indent')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
-
     def on_write (self):
-        #Basic Highlighting
+        """ Basic Highlighting """
         vim.command('syntax reset')
         vim.command('syn match Keyword /\w*:>> .*$/ contains=Title')
         vim.command('syn match Title /\w*:>>/ contained')
@@ -417,7 +428,6 @@ class TracTicket(TracRPC):
         self.a_option = []
         self.a_tickets = []
         self.filter = TracTicketFilter()
-
     def setServer (self, url):
         self.server = xmlrpclib.ServerProxy(url)
         self.getOptions()
@@ -505,9 +515,11 @@ class TracTicket(TracRPC):
         return ticket_list
     def getTicket(self, id):
         """ Get Ticket Page """
-        self.current_ticket_id = id
 
-        ticket =  self.server.ticket.get(id)
+        #print "Fetching: " + str(id)
+
+        ticket =  self.server.ticket.get(int (id))
+        self.current_ticket_id = id
 
         self.listAttachments()
 
@@ -746,7 +758,6 @@ class TracTicket(TracRPC):
 
         attribs = {'summary': summary}
         trac.ticket.updateTicket('', attribs, False)
-        
 
 class TracTicketFilter:
     def __init__(self):
@@ -1032,8 +1043,9 @@ class Trac:
         print self.wiki.get_page_info()
     def ticket_view(self ,id = False, b_use_cache = False) :
         """ Creates The Ticket View """
-
+        
         print 'Connecting...'
+        
 
         if id == 'CURRENTLINE': 
             id = vim.current.line
@@ -1041,14 +1053,19 @@ class Trac:
                 print "Hit enter on a line containing Ticket:>>"
                 return False
             else :
-                id = id.replace ('Ticket:>> ' ,'') 
+                id = id.replace ('Ticket:>> ' ,'')
+
         self.normal_view()
         self.uiticket.open()
         self.uiticket.tocwindow.clean()
         self.uiticket.tocwindow.write(self.ticket.getAllTickets(self.user, b_use_cache))
         self.uiticket.ticketwindow.clean()
+
         if (id == False):
-            self.uiticket.ticketwindow.write("Select Ticket To Load")
+            if self.ticket.current_ticket_id == False:
+                self.uiticket.ticketwindow.write("Select Ticket To Load")
+            else:
+                self.uiticket.ticketwindow.write(self.ticket.getTicket(trac.ticket.current_ticket_id))
             #This sets the cursor to the TOC if theres no active ticket
             vim.command("wincmd h")
         else:
@@ -1093,6 +1110,7 @@ class Trac:
     def set_current_server (self, server_key, quiet = False, view = False):
         """ Sets the current server key """ 
 
+        self.ticket.current_ticket_id = False
         self.server_url = self.server_list[server_key]
         self.server_name = server_key
         self.user = self.get_user(self.server_url)
