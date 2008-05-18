@@ -55,6 +55,8 @@ class VimWindow:
           self.buffer.append(str(msg).split('\n'))
         self.command('normal gg')
         self.on_write()
+    def on_before_write(self):
+        pass
     def on_write(self):
         ''' for vim commands after a write is made to a buffer '''
         pass
@@ -101,6 +103,7 @@ class VimWindow:
         if size  == False:
             size = self.width
         vim.command('vertical resize ' + str(size))
+
 
 class UI:
     """ User Interface Base Class """
@@ -926,7 +929,7 @@ class TracTimeline:
             import feedparser
         except ImportError: 
             print "Please install feedparser.py!"
-            return False;
+            return False
 
         from time import strftime
         import re
@@ -1017,7 +1020,6 @@ class Trac:
 
         vim.command('sign unplace *')
     def wiki_view(self , page = False, b_create = False) :
-
         if page == False:
             if self.wiki.currentPage == False:
                 page = 'WikiStart'
@@ -1059,10 +1061,19 @@ class Trac:
         if id == 'CURRENTLINE': 
             id = vim.current.line
             if (id.find('Ticket:>>') == -1):
-                print "Hit enter on a line containing Ticket:>>"
+                pos = vim.current.window.cursor
+                if pos[0] < 3:
+                    print "Click within a tickets area"
+                    return False
+
+                vim.command('call search (":>>", "b", line("w0"))');
+                id = vim.current.line
+
+            if (id.find('Ticket:>>') == -1):
+                print "Click within a tickets area"
                 return False
-            else :
-                id = id.replace ('Ticket:>> ' ,'')
+
+            id = id.replace ('Ticket:>> ' ,'')
 
         self.normal_view()
         self.uiticket.open()
@@ -1091,6 +1102,10 @@ class Trac:
         self.uiserver.serverwindow.write(servers)
     def search_open(self,keyword, b_preview = False):
         line = vim.current.line
+
+        if (line.find(':>>') == -1):
+            vim.command('call search (":>>", "b", line("w0"))');
+            line = vim.current.line
 
         if (line.find('Ticket:>> ') != -1):
             self.ticket_view(line.replace('Ticket:>> ', ''))
