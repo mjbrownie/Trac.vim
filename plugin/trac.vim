@@ -3,34 +3,34 @@
 " Script Info and Documentation  {{{
 "=============================================================================
 "    Copyright: Copyright (C) 2008 Michael Brown
-"      License:	The MIT License
-"				
-"				Permission is hereby granted, free of charge, to any person obtaining
-"				a copy of this software and associated documentation files
-"				(the "Software"), to deal in the Software without restriction,
-"				including without limitation the rights to use, copy, modify,
-"				merge, publish, distribute, sublicense, and/or sell copies of the
-"				Software, and to permit persons to whom the Software is furnished
-"				to do so, subject to the following conditions:
-"				
-"				The above copyright notice and this permission notice shall be included
-"				in all copies or substantial portions of the Software.
-"				
-"				THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"				OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"				MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"				IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"				CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"				TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"				SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"      License: The MIT License
+"
+"               Permission is hereby granted, free of charge, to any person obtaining
+"               a copy of this software and associated documentation files
+"               (the "Software"), to deal in the Software without restriction,
+"               including without limitation the rights to use, copy, modify,
+"               merge, publish, distribute, sublicense, and/or sell copies of the
+"               Software, and to permit persons to whom the Software is furnished
+"               to do so, subject to the following conditions:
+"
+"               The above copyright notice and this permission notice shall be included
+"               in all copies or substantial portions of the Software.
+"
+"               THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+"               OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+"               MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+"               IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+"               CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+"               TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+"               SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " Name Of File: trac.vim , trac.py
 "  Description: Wiki Client to the Trac Project Manager (trac.edgewall.org)
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
-"  Last Change: 
-"          URL: 
+"  Last Change:
+"          URL:
 "      Version: 0.3
 "
-"        Usage: 
+"        Usage:
 "
 "               You must have a working Trac repository version 0.10 or later
 "               complete with the xmlrpc plugin and a user with suitable
@@ -38,7 +38,7 @@
 "
 "               Fill in the server login details in the config section below.
 "
-"               Defatult key mappings: 
+"               Defatult key mappings:
 "
 "               <leader>to : Opens the Trac wiki view
 "               <leader>tq : Closes the Trac wiki View
@@ -48,7 +48,7 @@
 "               or
 "
 "               :TServer <server name   - Sets the current trac Server
-"               (use tab complete) 
+"               (use tab complete)
 "               :TClose             - Close VimTrac to the normal View
 "
 "               """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -58,18 +58,18 @@
 "               :TWOpen <WikiPage>    - Open the wiki View
 "               :TWSave "<Comment>"   - Saves the Active Wiki Page
 "
-"               In the Wiki TOC View Pages can be loaded by hitting <enter> 
+"               In the Wiki TOC View Pages can be loaded by hitting <enter>
 "
 "               In the Wiki View Window a Page Will go to the wiki page if
 "               you hit ctrl+] but will throw an error if you arent on a
 "               proper link.
 "
-"               Wikis can now be saved with :w and :wq. 
+"               Wikis can now be saved with :w and :wq.
 "               In all Trac windows :q will return to the normal view
 "
 "               Wiki Syntax will work with this wiki syntax file
 "               http://www.vim.org/scripts/script.php?script_id=725
-"               
+"
 "               """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "
 "               Trac Ticket Commands
@@ -78,8 +78,8 @@
 "
 "               Trac current ticket option modifications (use tab complete)
 "
-"               :TTSetMilestone <Milestone> 
-"               :TTSetType <Type 
+"               :TTSetMilestone <Milestone>
+"               :TTSetType <Type
 "               :TTSetStatus <Status>
 "               :TTSetResolution <Resolution>
 "               :TTSetPriority <Priority >
@@ -87,58 +87,58 @@
 "               :TTSetComponent <Component>
 "               :TTSetSummary <Summary >
 "
-"           
+"
 "               :TTAddComment               - Add the comment to the current
 "                                             ticket
 "
 "
-"				In the Ticket List window j and k jump to next ticket
-"				enter will select a ticket if it is hovering over a number
+"               In the Ticket List window j and k jump to next ticket
+"               enter will select a ticket if it is hovering over a number
 "
 "         Bugs:
 "
 "               Ocassionally when a wiki page/ticket is loaded it will throw an error.
 "               Just try and load it again
 "
-"               Please log any issues at http://www.ascetinteractive.com.au/vimtrac 
+"               Please log any issues at http://www.ascetinteractive.com.au/vimtrac
 "
-"        To Do: 
+"        To Do:
 "               - Complete Error handling for missing Files/Trac Error States
 "               - Add a new Wiki Page Option
 "               - Improve the toc scrolling (highlight current line)
-"               - Improve Ticket Viewing option 
+"               - Improve Ticket Viewing option
 "               - Add support for multiple trac servers
 "
 "
 "Configuration
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  
+
 if !exists('g:tracDefaultComment')
 let g:tracDefaultComment = 'VimTrac update' " DEFAULT COMMENT CHANGE
 endif
 
 if !exists('g:tracHideTracWiki')
-	let g:tracHideTracWiki = 'yes' " SET TO yes/no IF YOU WANT TO HIDE 
+    let g:tracHideTracWiki = 'yes' " SET TO yes/no IF YOU WANT TO HIDE
                                    " ALL THE INTERNAL TRAC WIKI PAGES (^Wiki*/^Trac*)
 endif
 
 if !exists('g:tracTempHtml')
-	let g:tracTempHtml = '/tmp/trac_wiki.html'
+    let g:tracTempHtml = '/tmp/trac_wiki.html'
 endif
 
 if !exists('g:tracSessionDirectory')
-	let g:tracSessionDirectory = expand ('$HOME') . '/.vimtrac_session'
+    let g:tracSessionDirectory = expand ('$HOME') . '/.vimtrac_session'
 endif
 
 if !exists('g:tracBrowser')
-	let g:tracBrowser = 'lynx'         " For Setting up Browser view (terminal)
-	"let g:tracBrowser = 'firefox'     " For Setting up Browser view (linux gui  - not tested)
-	"let g:tracBrowser = '"C:\Program Files\Mozilla Firefox\firefox.exe"' "GVim on Windows not tested
+    let g:tracBrowser = 'lynx'         " For Setting up Browser view (terminal)
+    "let g:tracBrowser = 'firefox'     " For Setting up Browser view (linux gui  - not tested)
+    "let g:tracBrowser = '"C:\Program Files\Mozilla Firefox\firefox.exe"' "GVim on Windows not tested
 endif
 
 if !exists('g:tracServerList')
 
-let g:tracServerList = {} 
+let g:tracServerList = {}
 
 "Add Server Repositories as Dictionary entries
 let g:tracServerList['Vim Trac']             = 'http://vimtracuser:wibble@www.ascetinteractive.com.au/vimtrac/login/xmlrpc'
@@ -150,7 +150,7 @@ endif
 let g:tracWikiStyle     = 'full'    " 'bottom' 'top' 'full'
 let g:tracSearchStyle   = 'left'   " 'right'
 let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
-let g:tracTicketStyle   = 'full' " 'top' 'left' right' 'full'
+let g:tracTicketStyle   = 'summary' " 'full'  'top' 'left' 'right' 'full'
 
 "Leader Short CUTS (Uncomment or add and customise to yout vimrc)
 " map <leader>to :TWOpen<cr>
@@ -160,7 +160,7 @@ let g:tracTicketStyle   = 'full' " 'top' 'left' right' 'full'
 " map <leader>tp :python trac_preview()<cr>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"End Configuration 
+"End Configuration
 
 "
 "
@@ -187,9 +187,9 @@ endif
 
 "Commmand Declarations
 "
-"NOTE: Due to the command list increasing as of version 0.3 of the plugin several command names 
+"NOTE: Due to the command list increasing as of version 0.3 of the plugin several command names
 "have been renamed. The ':Trac' command prefix has been cut down to :T and the first inital of
-"the module eg :TW... for TracWiki commands :TT... for Trac ticket commands 
+"the module eg :TW... for TracWiki commands :TT... for Trac ticket commands
 "
 "The trac.py file no longer references these commands directly so you are free
 "to change them if they clash with another plugin.
@@ -201,13 +201,12 @@ com! -nargs=+ -complete=customlist,ComTracServers TWServer  python trac.set_curr
 com! -nargs=+ -complete=customlist,ComTracServers TTServer  python trac.set_current_server  (<q-args>, False, 'ticket')
 com! -nargs=+ -complete=customlist,ComTracServers TTLServer python trac.set_current_server  (<q-args>, False ,'timeline')
 
-"QuickTicket Option (modify this command for your own servers) - Note Ticket #12 
+"QuickTicket Option (modify this command for your own servers) - Note Ticket #12
 com! -nargs=+ TQTaskOnVimTrac    python trac.ticket.create(<q-args> , 'task'        , 'Vim Trac')
 com! -nargs=+ TQDefectOnVimTrac  python trac.ticket.create(<q-args> , 'defect'      , 'Vim Trac')
 com! -nargs=+ TQEnhanceOnVimTrac python trac.ticket.create(<q-args> , 'enhancement' , 'Vim Trac')
 
 com! -nargs=? -complete=customlist,ComWiki        TWOpen          python trac.wiki_view  (<f-args>)
-
 
 fun LoadWikiCommands()
     "NOTE: TWSave is referenced in trac.py
@@ -223,12 +222,12 @@ endfun
 
 fun UnloadWikiCommands()
     try
-        delc TWSave          
-        delc TWCreate        
-        delc TWGetAttachment 
-        delc TWAddAttachment 
-        delc TWPreview       
-        delc TWDump          
+        delc TWSave
+        delc TWCreate
+        delc TWGetAttachment
+        delc TWAddAttachment
+        delc TWPreview
+        delc TWDump
         delc TWVimDiff
     endtry
 endfun
@@ -283,49 +282,65 @@ fun LoadTicketCommands()
     com! -nargs=0                                     TTLoadTicketSession python trac.ticket.session_load()
     com! -nargs=0                                     TTSaveTicketSession python trac.ticket.session_save()
 
-    com! -nargs=*                                     TTCloseTicket       python trac.ticket.close_ticket(<q-args>)
+    com! -nargs=? -complete=customlist,ComComponent   TTSaveCompSession   python trac.ticket.session_component_save(<q-args>)
+    com! -nargs=* -complete=customlist,ComComponent   TTLoadCompSession   python trac.ticket.session_component_load(<q-args>)
 
+    "Ticket resolution
+    com! -nargs=*                                     TTCloseTicket       python trac.ticket.close_ticket(<q-args>)
+    com! -nargs=*                                     TTResolveFixed      python trac.ticket.resolve_ticket(<q-args>,'fixed')
+    com! -nargs=*                                     TTResolveWontfix    python trac.ticket.resolve_ticket(<q-args>,'wontfix')
+    com! -nargs=*                                     TTResolveDuplicate  python trac.ticket.resolve_ticket(<q-args>,'duplicate')
+    com! -nargs=*                                     TTResolveInvalid    python trac.ticket.resolve_ticket(<q-args>,'invalid')
+    com! -nargs=*                                     TTResolveWorksForMe python trac.ticket.resolve_ticket(<q-args>,'worksforme')
 endfun
 
 fun UnloadTicketCommands()
     "Trac Ticket modifications
     try
-        delc TTCreateTask 
+        delc TTCreateTask
         delc TTCreateDefect
         delc TTCreateEnhancement
-        delc TTAddComment    
+        delc TTAddComment
         "Ticket Attributes
-        delc TTSetMilestone  
-        delc TTSetStatus     
+        delc TTSetMilestone
+        delc TTSetStatus
         delc TTSetType
-        delc TTSetResolution 
-        delc TTSetPriority   
-        delc TTSetSeverity   
-        delc TTSetComponent  
-        delc TTSetOwner      
-        delc TTSetSummary    
-        
+        delc TTSetResolution
+        delc TTSetPriority
+        delc TTSetSeverity
+        delc TTSetComponent
+        delc TTSetOwner
+        delc TTSetSummary
+
         delc TTUpdateDescrption
 
-        delc TTFilterMilestone   
-        delc TTFilterType    
-        delc TTFilterStatus      
-        delc TTFilterResolution  
-        delc TTFilterPriority    
-        delc TTFilterSeverity    
-        delc TTFilterComponent   
-        delc TTFilterOwner       
-        delc TTClearFilter      
+        delc TTFilterMilestone
+        delc TTFilterType
+        delc TTFilterStatus
+        delc TTFilterResolution
+        delc TTFilterPriority
+        delc TTFilterSeverity
+        delc TTFilterComponent
+        delc TTFilterOwner
+        delc TTClearFilter
         delc TTClearAllFilters
         "Ticket Attachments
-        delc TTGetAttachment     
-        delc TTAddAttachment     
+        delc TTGetAttachment
+        delc TTAddAttachment
         "Html Preview
-        delc TTPreview           
-        delc TTLoadTicketSession 
-        delc TTSaveTicketSession 
-        delc TTCloseTicket       
-        delc TTListFilters  
+        delc TTPreview
+        delc TTLoadTicketSession
+        delc TTSaveTicketSession
+        delc TTCloseTicket
+        delc TTListFilters
+        delc TTFilterNoMilestone
+        delc TTFilterNoOwner
+        "resolution
+        delc TTResolveFixed
+        delc TTResolveWontfix
+        delc TTResolveDuplicate
+        delc TTResolveInvalid
+        delc TTResolveWorksForMe
     endtry
 endfun
 
@@ -337,58 +352,58 @@ com! -nargs=0                                     TClose          python trac.no
 
 "FUNCTION COMPLETES
 fun ComTracServers (A,L,P)
-	return filter (keys(g:tracServerList), 'v:val =~ "^'.a:A.'"')
+    return filter (keys(g:tracServerList), 'v:val =~ "^'.a:A.'"')
 endfun
 
 let g:tracOptions = 1
 
 fun ComAttachments (A,L,P)
-	python trac.list_attachments()
+    python trac.list_attachments()
 
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComWiki  (A,L,P)
-	python trac.wiki.get_options()
+    python trac.wiki.get_options()
 
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
-"Command Com
+"COMMAND COMPLETES
 fun ComMilestone  (A,L,P)
-	python trac.ticket.get_options(0)
+    python trac.ticket.get_options(0)
 
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComType  (A,L,P)
-	python trac.ticket.get_options(1)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(1)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComStatus  (A,L,P)
-	python trac.ticket.get_options(2)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(2)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComResolution  (A,L,P)
-	python trac.ticket.get_options(3)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(3)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComPriority  (A,L,P)
-	python trac.ticket.get_options(4)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(4)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComSeverity  (A,L,P)
-	python trac.ticket.get_options(5)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(5)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 fun ComComponent  (A,L,P)
-	python trac.ticket.get_options(6)
-	return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+    python trac.ticket.get_options(6)
+    return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
 endfun
 
 python trac_init()

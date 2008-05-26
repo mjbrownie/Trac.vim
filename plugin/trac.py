@@ -103,8 +103,11 @@ class VimWindow:
         if size  == False:
             size = self.width
         vim.command('vertical resize ' + str(size))
-
-
+class NonEditableWindow(VimWindow):
+    def on_before_write(self):
+        vim.command("setlocal modifiable")
+    def on_write(self):
+        vim.command("setlocal nomodifiable")
 class UI:
     """ User Interface Base Class """
     def __init__(self):
@@ -294,7 +297,7 @@ class WikiWindow (VimWindow):
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
-class WikiTOContentsWindow (VimWindow):
+class WikiTOContentsWindow (NonEditableWindow):
     """ Wiki Table Of Contents """
     def __init__(self, name = 'WIKITOC_WINDOW'):
         VimWindow.__init__(self, name)
@@ -329,7 +332,8 @@ class WikiTOContentsWindow (VimWindow):
 
         vim.command('sort')
         vim.command('silent norm ggOWikiStart')
-class WikiAttachmentWindow(VimWindow):
+        NonEditableWindow.on_write(self) 
+class WikiAttachmentWindow(NonEditableWindow):
     """ Wiki's attachments """
     def __init__(self, name = 'WIKIATT_WINDOW'):
         VimWindow.__init__(self, name)
@@ -342,7 +346,7 @@ class WikiAttachmentWindow(VimWindow):
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
-class WikiVimDiffWindow (VimWindow):
+class WikiVimDiffWindow (NonEditableWindow):
     """ For Earlier revisions """
     def __init__(self, name = 'WIKI_DIFF_WINDOW'):
         VimWindow.__init__(self, name)
@@ -399,7 +403,7 @@ class TracSearchUI(UI):
             self.searchwindow.create("vertical belowright new")
         else:
             self.searchwindow.create("vertical aboveleft new")
-class TracSearchWindow(VimWindow):
+class TracSearchWindow(NonEditableWindow):
     """ for displaying search results """
     def __init__(self, name = 'SEARCH_WINDOW'):
         VimWindow.__init__(self, name)
@@ -415,6 +419,7 @@ class TracSearchWindow(VimWindow):
         vim.command('setlocal noswapfile')
     def on_write (self):
         """ Basic Highlighting """
+        NonEditableWindow.on_write(self) 
         vim.command('syntax reset')
         vim.command('syn match Keyword /\w*:>> .*$/ contains=Title')
         vim.command('syn match Title /\w*:>>/ contained')
@@ -512,7 +517,73 @@ class TracTicket(TracRPC):
                     str_ticket += "     * Session: PRESENT \n"
                 str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n" 
                 
-                str_ticket += "--------------------------------------------"
+                #str_ticket += "--------------------------------------------"
+
+                ticket_list += str_ticket
+
+        ticket_list += "\n"
+        return ticket_list
+    def getAllTicketsSummary(self,owner, b_use_cache = False):
+        """ Gets a List of Ticket Pages """
+
+        if self.a_option == []:
+            self.getOptions()
+
+        if b_use_cache:
+            tickets = self.a_tickets
+        else:
+            multicall = xmlrpclib.MultiCall(self.server)
+            #for ticket in self.server.ticket.query("owner=" + owner):
+            for ticket in self.server.ticket.query():
+                multicall.ticket.get(ticket)
+            tickets = multicall()
+            self.a_tickets = tickets
+
+        #ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n"
+        ticket_list = ""
+
+        #if self.filter.filters != []:
+            #ticket_list += "(filtered)\n"
+            #i = 1
+            #ticket_list += self.filter.list()
+
+        milestone = ''
+
+        for ticket in tickets:
+
+            if ticket[3]["status"] != "closed" and self.filter.check(ticket):
+                str_ticket = ''
+
+                #This wont work without ordering
+                #last_milestone = ticket[3]["milestone"]
+                #if milestone !=  last_milestone and last_milestone != '':
+                    #milestone = ticket[3]["milestone"]
+                    #str_ticket += "\n--------------------------------------------" + "\n"
+                    #str_ticket += 'MILESTONE: ' + milestone + "\n"
+                    #str_ticket += "--------------------------------------------" + "\n"
+
+                str_ticket += ""      + str(ticket[0])
+                str_ticket += ". || " + ticket[3]["summary"][0:50]  
+                if len(ticket[3]["summary"]) > 50 :
+                    str_ticket += "..."
+                str_ticket += " || " + ticket[3]["priority"]
+                str_ticket += " || " + ticket[3]["status"]
+                milestone =  ticket[3]["milestone"]
+                if (milestone == ''):
+                    milestone = 'NOMILESTONE'
+                component =  ticket[3]["component"]
+                if (component == ''):
+                    component = 'NOCOMPONENT'
+                str_ticket += " || " + component
+                str_ticket += " || " + milestone
+                str_ticket += " || " + ticket[3]["type"]
+                str_ticket += " || " + ticket[3]["owner"] + "\n"
+
+                #if self.session_is_present(ticket[0]):
+                    #str_ticket += "     || Session: PRESENT \n"
+                #str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n"
+
+                #str_ticket += "--------------------------------------------"
 
                 ticket_list += str_ticket
 
@@ -525,6 +596,7 @@ class TracTicket(TracRPC):
 
         ticket =  self.server.ticket.get(int (id))
         self.current_ticket_id = id
+        self.current_component = ticket[3]["component"] 
 
         self.listAttachments()
 
@@ -619,7 +691,8 @@ class TracTicket(TracRPC):
             print "Cannot make changes when there is no current ticket open in Ticket View"
             return 0
 
-        comment = ''
+        comment = trac.uiticket.commentwindow.dump()
+        trac.uiticket.commentwindow.clean()
         attribs = {value:option}
         trac.ticket.updateTicket(comment, attribs, False)
         trac.ticket_view(trac.ticket.current_ticket_id, True)
@@ -696,6 +769,8 @@ class TracTicket(TracRPC):
         trac.ticket_view(trac.ticket.current_ticket_id)
     def close_ticket(self, comment):
         self.updateTicket(comment, {'status': 'closed'})
+    def resolve_ticket(self, comment, resolution):
+        self.updateTicket(comment, {'status': 'closed','resolution':resolution})
     def session_save (self):
         global trac
 
@@ -742,6 +817,63 @@ class TracTicket(TracRPC):
         vim.command("bdelete TICKET_WINDOW")
         vim.command("bdelete TICKET_COMMENT_WINDOW")
         trac.ticket_view(self.current_ticket_id)
+    def session_component_save(self, component = False):
+        """ Save a session based on the component supplied or the current ticket """
+        global trac
+
+        if component == False:
+            if self.current_component == False:
+                print "You need to have an active ticket or a component as an argument"
+                return False
+            else:
+                component = self.current_component
+
+        directory = vim.eval('g:tracSessionDirectory')   
+        if os.path.isfile(directory) != False:
+            print "Cant create session directory"
+            return False
+        
+        if os.path.isdir(directory) == False: 
+            os.mkdir(directory)
+
+        serverdir = re.sub (r'[^\w]', '', trac.server_name)
+        component = re.sub (r'[^\w]', '', component)
+
+        if os.path.isdir(directory +  '/' + serverdir) == False:
+            os.mkdir(directory + '/' + serverdir)
+
+        sessfile = directory + '/' + serverdir + "/vimsess." + str(component)
+        vim.command('mksession! ' + sessfile )
+        print "Session file Created: " + sessfile
+    def session_component_load(self, component):
+        """ Loads a session based on the component supplied or the current ticket """
+        global trac
+
+        if component == False:
+            if self.current_component == False:
+                print "You need to have an active ticket or a component as an argument"
+                return False
+            else:
+                component = self.current_component
+
+        serverdir = re.sub (r'[^\w]', '', trac.server_name)
+        component = re.sub (r'[^\w]', '', component)
+        directory = vim.eval('g:tracSessionDirectory')   
+        sessfile = directory + '/' + serverdir + "/vimsess." + str(component)
+
+        if os.path.isfile(sessfile) == False:
+            print "This ticket does not have a session: " + sessfile
+            return False
+            
+
+        vim.command("bdelete TICKETTOC_WINDOW")
+        vim.command("bdelete TICKET_WINDOW")
+        vim.command("bdelete TICKET_COMMENT_WINDOW")
+        vim.command('source ' + sessfile )
+        vim.command("bdelete TICKETTOC_WINDOW")
+        vim.command("bdelete TICKET_WINDOW")
+        vim.command("bdelete TICKET_COMMENT_WINDOW")
+        trac.ticket_view(self.current_ticket_id)
     def get_session_file(self, id = False):
         global trac
 
@@ -763,6 +895,29 @@ class TracTicket(TracRPC):
 
         attribs = {'summary': summary}
         trac.ticket.updateTicket('', attribs, False)
+    def context_set(self):
+        line = vim.current.line
+        if (re.match("Milestone:", line) != None):
+            self.get_options(0)
+        elif (re.match("Type:",line) != None):
+            self.get_options(1)
+        elif (re.match("Status:",line) != None):
+            self.get_options(2)
+        elif (re.match("Resolution:",line) != None):
+            self.get_options(3)
+        elif (re.match("Priority:",line) != None):
+            self.get_options(4)
+        elif (re.match("Severity:",line) != None):
+            self.get_options(5)
+        elif (re.match("Component:",line) != None):
+            self.get_options(6)
+        else:
+            print "This only works on ticket property lines"
+            #return False
+        self.get_options(0)
+        vim.command('setlocal modifiable')
+        setting = vim.eval("complete(col('.'), g:tracOptions)")
+        print setting
 
 class TracTicketFilter:
     def __init__(self):
@@ -814,6 +969,8 @@ class TracTicketUI (UI):
         self.ticketwindow  = TicketWindow()
         self.tocwindow     = TicketTOContentsWindow()
         self.commentwindow = TicketCommentWindow()
+        self.summarywindow = TicketSummaryWindow()
+
         self.mode          = 0 #Initialised to default
     def destroy(self):
         """ destroy windows """
@@ -823,6 +980,8 @@ class TracTicketUI (UI):
         self.ticketwindow.destroy()
         self.tocwindow.destroy()
         self.commentwindow.destroy()
+        self.summarywindow.destroy()
+
     def create(self):
         """ create windows """
         style = vim.eval ('g:tracTicketStyle') 
@@ -842,6 +1001,12 @@ class TracTicketUI (UI):
             self.tocwindow.create("belowright new")
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
+        elif style == 'summary':
+            self.summarywindow.create('belowright 9 new')
+            vim.command('wincmd k')
+            self.ticketwindow.create('vertical belowright new')
+            self.commentwindow.create('belowright 7 new')
+            self.summarywindow.set_focus()
         else:
             self.tocwindow.create("belowright new")
             vim.command('only')
@@ -849,7 +1014,30 @@ class TracTicketUI (UI):
             self.commentwindow.create("belowright 15 new")
 
         vim.command ("call LoadTicketCommands()")
-class TicketWindow (VimWindow):
+
+class TicketSummaryWindow(NonEditableWindow):
+    """ Ticket Table Of Contents """
+    def __init__(self, name = 'TICKETSUMMARY_WINDOW'):
+        VimWindow.__init__(self, name)
+
+    def on_create(self):
+        vim.command('nnoremap <buffer> <cr> :python trac.ticket_view  ("SUMMARYLINE")<cr>')
+        vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
+        vim.command('nnoremap <buffer> <2-LeftMouse> :python trac.ticket_view("SUMMARYLINE")<cr>')
+        vim.command('setlocal cursorline')
+        vim.command('setlocal linebreak')
+        vim.command('setlocal syntax=text')
+        vim.command('setlocal foldmethod=indent')
+        vim.command('setlocal nowrap')
+        vim.command('silent norm gg')
+        vim.command('setlocal noswapfile')
+
+    def on_write(self):
+        vim.command('%Align ||')
+        vim.command('syn match Ignore /||/')
+        vim.command("setlocal nomodifiable")
+
+class TicketWindow (NonEditableWindow):
     """ Ticket Window """
     def __init__(self, name = 'TICKET_WINDOW'):
         VimWindow.__init__(self, name)
@@ -864,6 +1052,7 @@ class TicketWindow (VimWindow):
         vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         #vim.command('setlocal linebreak')
         vim.command('setlocal syntax=wiki')
+        vim.command('nnoremap <buffer> <c-p> :python trac.ticket.context_set()<cr>')
 class TicketCommentWindow (VimWindow):
     """ For adding Comments to tickets """
     def __init__ (self,name = 'TICKET_COMMENT_WINDOW'):
@@ -875,7 +1064,7 @@ class TicketCommentWindow (VimWindow):
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal noswapfile')
-class TicketTOContentsWindow (VimWindow):
+class TicketTOContentsWindow (NonEditableWindow):
     """ Ticket Table Of Contents """
     def __init__(self, name = 'TICKETTOC_WINDOW'):
         VimWindow.__init__(self, name)
@@ -912,7 +1101,7 @@ class TracServerUI (UI):
     def destroy(self):
         """ destroy windows """
         self.serverwindow.destroy()
-class ServerWindow(VimWindow):
+class ServerWindow(NonEditableWindow):
     """ Server Window """
     def __init__(self, name = 'SERVER_WINDOW'):
         VimWindow.__init__(self, name)
@@ -977,7 +1166,7 @@ class TracTimelineUI(UI):
            self.timeline_window.create("vertical aboveleft new")
     def destroy (self):
         self.timeline_window.destroy()
-class TracTimelineWindow(VimWindow):
+class TracTimelineWindow(NonEditableWindow):
     """ RSS Feed Window """
 
     def __init__(self, name = 'TIMELINE_WINDOW'):
@@ -1074,13 +1263,25 @@ class Trac:
                 return False
 
             id = id.replace ('Ticket:>> ' ,'')
+        
+        if id == 'SUMMARYLINE':
+            m = re.search(r'^([0123456789]+)',vim.current.line)
+            id = int(m.group(0))
 
         self.normal_view()
         self.uiticket.open()
-        self.uiticket.tocwindow.clean()
-        self.uiticket.tocwindow.write(self.ticket.getAllTickets(self.user, b_use_cache))
+
+        style = vim.eval ('g:tracTicketStyle') 
+        if style == 'summary':
+            self.uiticket.summarywindow.clean()
+            self.uiticket.summarywindow.write(self.ticket.getAllTicketsSummary(self.user, b_use_cache))
+        else:
+            self.uiticket.tocwindow.clean()
+            self.uiticket.tocwindow.write(self.ticket.getAllTickets(self.user, b_use_cache))
+
         self.uiticket.ticketwindow.clean()
 
+        
         if (id == False):
             if self.ticket.current_ticket_id == False:
                 self.uiticket.ticketwindow.write("Select Ticket To Load")
