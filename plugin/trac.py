@@ -107,7 +107,14 @@ class NonEditableWindow(VimWindow):
     def on_before_write(self):
         vim.command("setlocal modifiable")
     def on_write(self):
+        pass
         vim.command("setlocal nomodifiable")
+    def clean(self):
+        """ clean all datas in buffer """
+        self.prepare()
+        vim.command('setlocal modifiable')
+        self.buffer[:] = []
+        self.firstwrite = 1
 class UI:
     """ User Interface Base Class """
     def __init__(self):
@@ -128,11 +135,6 @@ class UI:
 
         # destory all created windows
         self.destroy()
-
-        # restore session
-        #(disabling this)
-        #vim.command('source ' + self.sessfile)
-        #os.system('rm -f ' + self.sessfile)
 
         #self.winbuf.clear()
         self.file    = None
@@ -174,6 +176,7 @@ class TracWiki(TracRPC):
                     print "Could not create page " + name
             else:
                 print "Could not find page " + name + ". Use :TWCreate " + name+ " to create it"
+                self.currentPage = False
                 return False
         return wikitext 
     def save (self,  comment):
@@ -241,7 +244,11 @@ class TracWiki(TracRPC):
     
         diffwindow = WikiVimDiffWindow()
         diffwindow.create('vertical belowright diffsplit')
-        diffwindow.write(self.getPage(self.currentPage, False, revision))
+
+        wikitext = self.getPage(self.currentPage, False, revision)
+        if wikitext != False:
+            diffwindow.write(wikitext)
+
         trac.uiwiki.tocwindow.resize_width(30) 
         trac.uiwiki.wikiwindow.set_focus()
         #trac.uiwiki.wikiwindow.resize_width(int (trac.uiwiki.wikiwindow.width / 2)) 
@@ -290,6 +297,7 @@ class WikiWindow (VimWindow):
         vim.command('nnoremap <buffer> <c-]> :python trac.wiki_view ("<C-R><C-W>")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('nnoremap <buffer> :wq<cr> :python trac.save_wiki('')<cr>:python trac.normal_view()<cr>')
+        vim.command('nnoremap <buffer> <2-LeftMouse> :python trac.wiki_view("<C-R><C-W>")<cr>')
         #map gf to a new buffer (switching buffers doesnt work with nofile)
         vim.command('nnoremap <buffer> gf <c-w><c-f><c-w>K')
         vim.command('vertical resize +70')
@@ -341,8 +349,8 @@ class WikiAttachmentWindow(NonEditableWindow):
     def on_create(self):
         vim.command('nnoremap <buffer> <cr> :python trac.get_attachment("CURRENTLINE")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
-        vim.command('setlocal winwidth=30')
-        vim.command('vertical resize 30')
+        #vim.command('setlocal winwidth=30')
+        #vim.command('vertical resize 30') 
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
@@ -438,6 +446,8 @@ class TracTicket(TracRPC):
         self.a_option = []
         self.a_tickets = []
         self.filter = TracTicketFilter()
+        self.sort = TracTicketSort()
+
     def setServer (self, url):
         self.server = xmlrpclib.ServerProxy(url)
         self.getOptions()
@@ -451,12 +461,17 @@ class TracTicket(TracRPC):
         multicall.ticket.resolution.getAll()
         multicall.ticket.priority.getAll() 
         multicall.ticket.severity.getAll()
-        multicall.ticket.component.getAll()
-        
+        multicall.ticket.component.getAll() 
+
         a_option = []
 
         for option in  multicall():
             a_option.append(option)
+
+        for milestone in a_option[0]:
+            multicall.ticket.milestone.get(milestone)
+        
+        a_option.append(multicall())
 
         self.a_option =  a_option
     def getAllTickets(self,owner, b_use_cache = False):
@@ -470,10 +485,12 @@ class TracTicket(TracRPC):
         else:
             multicall = xmlrpclib.MultiCall(self.server)
             #for ticket in self.server.ticket.query("owner=" + owner):
-            for ticket in self.server.ticket.query():
+            for ticket in self.server.ticket.query(vim.eval('g:tracTicketClause')):
                 multicall.ticket.get(ticket)
             tickets = multicall()
             self.a_tickets = tickets
+
+        tickets = self.sort.sort(tickets)
 
         ticket_list = "(Hit <enter> or <space> on a line containing Ticket:>>)\n"
 
@@ -485,7 +502,6 @@ class TracTicket(TracRPC):
         milestone = ''
 
         for ticket in tickets:
-            
 
             if ticket[3]["status"] != "closed" and self.filter.check(ticket):
                 str_ticket = ''
@@ -548,7 +564,8 @@ class TracTicket(TracRPC):
             #ticket_list += self.filter.list()
 
         milestone = ''
-
+    
+        tickets = self.sort.sort(tickets)
         for ticket in tickets:
 
             if ticket[3]["status"] != "closed" and self.filter.check(ticket):
@@ -613,6 +630,7 @@ class TracTicket(TracRPC):
         str_ticket += "*    Priority: " + ticket[3]["priority"]  + "\n"
         str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
         str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
+        str_ticket += "*     Version: " + ticket[3]["version"] + "\n"
         #look for session files 
         
         if self.session_is_present():
@@ -632,20 +650,16 @@ class TracTicket(TracRPC):
         import datetime
         for change in ticket_changelog:
             if change[4] != '':
-                my_time = datetime.datetime.fromtimestamp(change[0]).strftime("%A (%a) %d/%m/%Y %H:%M:%S")
-                str_ticket +=  '== ' +  my_time + " ==\n"
+                my_time = datetime.datetime.fromtimestamp(change[0]).strftime("%a %d/%m/%Y %H:%M:%S")
                 #just mention if a ticket has been changed
-                if change[2] == 'description':
-                    str_ticket += "      (" + change[1]  + ": modified description)\n\n"
-                
-                elif change[2] == 'comment':
-                    str_ticket += "      (" + change[1]  + ": comment)\n    "
+                if change[2] == 'comment':
+                    str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": comment) ==\n    "
                     str_ticket += "\n    ".join (change[4].strip().split("\n")) + "\n" 
-                    #str_ticket += change[4] + "\n\n"
-                elif change[2] == 'milestone':
-                    str_ticket += "      (" + change[1] + ": milestone set to " + change[4] + ")\n\n"
+
+                elif change[2] == 'description':
+                    str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": modified description) ==\n"
                 else :
-                    str_ticket += "      (" + change[1] + ": " + change[2] + " set to " + change[4] + ")\n\n"
+                    str_ticket +=  '== ' +  my_time + " (" + change[1]  + " set " +change[2] +" to " + change[4] + ") ==\n"
 
         return str_ticket
     def updateTicket(self, comment, attribs = {}, notify = False):
@@ -693,9 +707,14 @@ class TracTicket(TracRPC):
 
         comment = trac.uiticket.commentwindow.dump()
         trac.uiticket.commentwindow.clean()
-        attribs = {value:option}
+        #if a milestone setting mate set status to assigned TODO Thisshuold be optional
+        if value == 'milestone':
+            attribs = {value:option, 'status':'assigned'}
+        else:
+            attribs = {value:option}
         trac.ticket.updateTicket(comment, attribs, False)
         trac.ticket_view(trac.ticket.current_ticket_id, True)
+
     def add_comment(self):
         """ Adds Comment window comments to the current ticket """
         global trac
@@ -918,6 +937,28 @@ class TracTicket(TracRPC):
         vim.command('setlocal modifiable')
         setting = vim.eval("complete(col('.'), g:tracOptions)")
         print setting
+    def summary_view(self):
+        global trac
+        trac.uiticket.summarywindow.create('belowright 10 new')
+        trac.uiticket.summarywindow.write(self.getAllTicketsSummary(trac.user,False ))
+        trac.uiticket.mode = 2
+
+
+class TracTicketSort:
+    def sort(self,tickets):
+        """ Ticket sorting TODO should probably use python sort"""
+        sorted_tickets = []
+        #for milestone in trac.ticket.a_option[7]:
+        for milestone in trac.ticket.a_option[0]:
+            for ticket in tickets:
+                #if ticket[3]['milestone'] == milestone['name']:
+                if ticket[3]['milestone'] == milestone:
+                    sorted_tickets.append(ticket)
+        #append tickets without milestones
+        for ticket in tickets:
+            if ticket[3]['milestone'] == '':
+                sorted_tickets.append(ticket)
+        return sorted_tickets
 
 class TracTicketFilter:
     def __init__(self):
@@ -972,6 +1013,26 @@ class TracTicketUI (UI):
         self.summarywindow = TicketSummaryWindow()
 
         self.mode          = 0 #Initialised to default
+    def normal_mode(self):
+        """ restore mode to normal """
+        if self.mode == 0: # is normal mode ?
+            return
+
+        if self.mode == 2:
+            self.summarywindow.destroy()
+            return
+
+        vim.command('sign unplace 1')
+        vim.command('sign unplace 2')
+
+        # destory all created windows
+        self.destroy()
+
+        #self.winbuf.clear()
+        self.file    = None
+        self.line    = None
+        self.mode    = 0
+        self.cursign = None
     def destroy(self):
         """ destroy windows """
         
@@ -1002,9 +1063,10 @@ class TracTicketUI (UI):
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
         elif style == 'summary':
+            self.ticketwindow.create('vertical belowright new')
+            vim.command('only')
             self.summarywindow.create('belowright 9 new')
             vim.command('wincmd k')
-            self.ticketwindow.create('vertical belowright new')
             self.commentwindow.create('belowright 7 new')
             self.summarywindow.set_focus()
         else:
@@ -1015,7 +1077,7 @@ class TracTicketUI (UI):
 
         vim.command ("call LoadTicketCommands()")
 
-class TicketSummaryWindow(NonEditableWindow):
+class TicketSummaryWindow(VimWindow):
     """ Ticket Table Of Contents """
     def __init__(self, name = 'TICKETSUMMARY_WINDOW'):
         VimWindow.__init__(self, name)
@@ -1035,7 +1097,8 @@ class TicketSummaryWindow(NonEditableWindow):
     def on_write(self):
         vim.command('%Align ||')
         vim.command('syn match Ignore /||/')
-        vim.command("setlocal nomodifiable")
+        #vim.command("setlocal nomodifiable")
+        vim.command('norm gg')
 
 class TicketWindow (NonEditableWindow):
     """ Ticket Window """
@@ -1237,7 +1300,7 @@ class Trac:
         self.wiki.listAttachments();
 
         if (self.wiki.current_attachments != []):
-            self.uiwiki.wiki_attach_window.create('vertical belowright new')
+            self.uiwiki.wiki_attach_window.create('belowright 3 new')
             self.uiwiki.wiki_attach_window.write("\n".join(self.wiki.current_attachments))
 
         print self.wiki.get_page_info()
