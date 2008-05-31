@@ -146,6 +146,16 @@ let g:tracServerList['(ServerName)']         = 'http://(User):(Pass)@(ServerPath
 
 endif
 
+"This can be modified to speed up queries
+if !exists('g:tracTicketClause')
+    let g:tracTicketClause = 'status!=closed'
+endif            
+
+if !exists('g:tracTicketBriefDescription')
+    let g:tracTicketBriefDescription = 1
+endif
+
+
 "Layouts can be modified here
 let g:tracWikiStyle     = 'full'    " 'bottom' 'top' 'full'
 let g:tracSearchStyle   = 'left'   " 'right'
@@ -268,6 +278,18 @@ fun LoadTicketCommands()
     com! -nargs=? -complete=customlist,ComMilestone   TTFilterNoMilestone python trac.ticket.filter.add('', 'milestone' )
     com! -nargs=?                                     TTFilterNoOwner     python trac.ticket.filter.add('', 'owner' )
 
+    com! -nargs=? -complete=customlist,ComMilestone   TTIgnoreMilestone   python trac.ticket.filter.add(<f-args>, 'milestone' ,False)
+    com! -nargs=? -complete=customlist,ComType        TTIgnoreType        python trac.ticket.filter.add(<f-args>, 'type' ,False)
+    com! -nargs=? -complete=customlist,ComStatus      TTIgnoreStatus      python trac.ticket.filter.add(<f-args>, 'status' ,False)
+    com! -nargs=? -complete=customlist,ComResolution  TTIgnoreResolution  python trac.ticket.filter.add(<f-args>, 'resolution' ,False)
+    com! -nargs=? -complete=customlist,ComPriority    TTIgnorePriority    python trac.ticket.filter.add(<f-args>, 'priority' ,False)
+    com! -nargs=? -complete=customlist,ComSeverity    TTIgnoreSeverity    python trac.ticket.filter.add(<f-args>, 'severity' ,False)
+    com! -nargs=? -complete=customlist,ComComponent   TTIgnoreComponent   python trac.ticket.filter.add(<f-args>, 'component' ,False)
+    com! -nargs=?                                     TTIgnoreOwner       python trac.ticket.filter.add(<f-args>, 'owner' ,False)
+
+    com! -nargs=? -complete=customlist,ComMilestone   TTIgnoreNoMilestone python trac.ticket.filter.add('', 'milestone' ,False)
+    com! -nargs=?                                     TTIgnoreNoOwner     python trac.ticket.filter.add('', 'owner' ,False)
+
     com! -nargs=0                                     TTClearAllFilters   python trac.ticket.filter.clear()
     com! -nargs=*                                     TTClearFilter       python trac.ticket.filter.delete(<f-args>)
     com! -nargs=*                                     TTListFilters       python trac.ticket.filter.list()
@@ -324,6 +346,19 @@ fun UnloadTicketCommands()
         delc TTFilterOwner
         delc TTClearFilter
         delc TTClearAllFilters
+
+        delc TTIgnoreMilestone
+        delc TTIgnoreType
+        delc TTIgnoreStatus
+        delc TTIgnoreResolution
+        delc TTIgnorePriority
+        delc TTIgnoreSeverity
+        delc TTIgnoreComponent
+        delc TTIgnoreOwner
+
+        delc TTIgnoreNoMilestone
+        delc TTIgnoreNoOwner
+
         "Ticket Attachments
         delc TTGetAttachment
         delc TTAddAttachment
