@@ -28,7 +28,7 @@
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
 "  Last Change:
 "          URL:
-"      Version: 0.3
+"      Version: 0.3.3
 "
 "        Usage:
 "
@@ -150,6 +150,7 @@ endif
 if !exists('g:tracTicketClause')
     let g:tracTicketClause = 'status!=closed'
 endif            
+
 "Set this to 1 if you wan the ticket view to ignore attribute changes which
 "can clutter up the view
 "
@@ -365,6 +366,8 @@ fun UnloadTicketCommands()
         delc TTFilterOwner
         delc TTClearFilter
         delc TTClearAllFilters
+
+        delc TTSortby
 
         delc TTIgnoreMilestone
         delc TTIgnoreType
