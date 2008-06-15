@@ -10,6 +10,7 @@
     4.2. Adding/ Retrieving an Attachment               |trac-wiki-attachments|
     4.3. HTML Preview                                   |trac-wiki-htmlpreview|
     4.4. Saving Wiki's                                  |trac-wiki-save|
+    4.5 Wiki Vim Diffs                                  |trac-wiki-diff|
 5. Trac Ticket View                                     |trac-ticket-view|
     5.1 Ticket Filters                                  |trac-ticket-filters|
         5.1.1 Ticket Sorting                            |trac-ticket-sorting|
@@ -33,11 +34,18 @@
 ================================================================================
 2. Setup                                                            *trac-setup*
 
-    You can create a list of trac servers using this format in your vimrc.
+    You need to  create a list of trac servers using this format in your vimrc.     
 
+    "let g:tracServerList = {}
     "let g:tracServerList['(Server Name)'] = 
         \'http://(user):(password)@(trac serverpath)/login/xmlrpc'
 
+    Check out 
+
+    http://www.ascetinteractive.com.au/vimtrac/wiki/UsageNotes  and 
+    http://www.ascetinteractive.com.au/vimtrac/wiki/TricksAndTips
+
+    for more up to date notes
     
 ================================================================================
 3. Server Selection                                                *trac-server*
@@ -120,6 +128,14 @@
     Exiting is done by either the command
 
     :TClose, :wq<cr> or :q<cr> in either of the wiki windows
+
+4.5 Wiki Vim Diffs                                              *trac-wiki-diff*
+
+    :TWVimDiff <revision no>                                        *:TWVimDiff*
+    
+    Opens a vertical split diff The current wiki's <revision no>. If theres
+    no argument supplied it will be the previous revision.
+
 
 ================================================================================
 5. Trac Ticket View                                           *trac-ticket-view*
