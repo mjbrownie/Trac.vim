@@ -150,24 +150,42 @@ endif
 if !exists('g:tracTicketClause')
     let g:tracTicketClause = 'status!=closed'
 endif            
-
+"Set this to 1 if you wan the ticket view to ignore attribute changes which
+"can clutter up the view
+"
 if !exists('g:tracTicketBriefDescription')
     let g:tracTicketBriefDescription = 1
 endif
 
 
 "Layouts can be modified here
-let g:tracWikiStyle     = 'full'    " 'bottom' 'top' 'full'
-let g:tracSearchStyle   = 'left'   " 'right'
-let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
-let g:tracTicketStyle   = 'summary' " 'full'  'top' 'left' 'right' 'full'
+if !exists('g:tracWikiStyle')
+    let g:tracWikiStyle     = 'full'    " 'bottom' 'top' 'full'
+endif
+if !exists('g:tracSearchStyle')
+    let g:tracSearchStyle   = 'left'   " 'right'
+endif
+if !exists('g:tracTimelineStyle')
+    let g:tracTimelineStyle = 'bottom'   " 'left' 'right'
+endif
+" Ticket view styles note the summary style needs the Align plugin
+if !exists('g:tracTicketStyle')
+    let g:tracTicketStyle   = 'summary' " 'full'  'top' 'left' 'right' 'full'
+endif
 
 "Leader Short CUTS (Uncomment or add and customise to yout vimrc)
+"Open Wiki
 " map <leader>to :TWOpen<cr>
+" Save Wiki
 " map <leader>tw :TWSave<cr>
+" Close wiki/ticket view
 " map <leader>tq :TClose<cr>
+" resize
 " map <leader>tt :python trac_window_resize()<cr>
+" preview window
 " map <leader>tp :python trac_preview()<cr>
+"
+" map <leader>tp :python trac.ticket.summary_view()<cr>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "End Configuration
@@ -293,7 +311,8 @@ fun LoadTicketCommands()
     com! -nargs=0                                     TTClearAllFilters   python trac.ticket.filter.clear()
     com! -nargs=*                                     TTClearFilter       python trac.ticket.filter.delete(<f-args>)
     com! -nargs=*                                     TTListFilters       python trac.ticket.filter.list()
-
+    "Ticket Sorting
+    com! -nargs=? -complete=customlist,ComSort        TTSortby            python trac.ticket.sort.set_sortby(<f-args>)
 
     "Ticket Attachments
     com! -nargs=? -complete=customlist,ComAttachments TTGetAttachment     python trac.get_attachment (<f-args>)
@@ -439,6 +458,10 @@ endfun
 fun ComComponent  (A,L,P)
     python trac.ticket.get_options(6)
     return filter (split (g:tracOptions, '|' ), 'v:val =~ "^' . a:A . '"')
+endfun
+
+fun ComSort (A,L,P)
+    return filter (['priority','milestone'], 'v:val =~ "^' . a:A . '"')
 endfun
 
 python trac_init()
