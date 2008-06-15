@@ -49,7 +49,11 @@ class VimWindow:
         self.prepare()
         if self.firstwrite == 1:
           self.firstwrite = 0
+
+          #TODO tickets #7 and #56 setting to utf-8 causes ticket Encoding errors
+          #msg = msg.encode('utf-8', 'ignore')
           msg = msg.encode('ascii', 'ignore')
+
           self.buffer[:] = str(msg).split('\n')
         else:
           self.buffer.append(str(msg).split('\n'))
@@ -652,14 +656,15 @@ class TracTicket(TracRPC):
             if change[4] != '':
                 my_time = datetime.datetime.fromtimestamp(change[0]).strftime("%a %d/%m/%Y %H:%M:%S")
                 #just mention if a ticket has been changed
+                brief = vim.eval('g:tracTicketBriefDescription')
                 if change[2] == 'comment':
                     str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": comment) ==\n    "
                     str_ticket += "\n    ".join (change[4].strip().split("\n")) + "\n" 
-
-                elif change[2] == 'description':
-                    str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": modified description) ==\n"
-                else :
-                    str_ticket +=  '== ' +  my_time + " (" + change[1]  + " set " +change[2] +" to " + change[4] + ") ==\n"
+                elif brief == 0:
+                    if change[2] == 'description':
+                        str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": modified description) ==\n"
+                    else :
+                        str_ticket +=  '== ' +  my_time + " (" + change[1]  + " set " +change[2] +" to " + change[4] + ") ==\n"
 
         return str_ticket
     def updateTicket(self, comment, attribs = {}, notify = False):
@@ -945,8 +950,15 @@ class TracTicket(TracRPC):
 
 
 class TracTicketSort:
+
+    sortby = 'milestone'
+
     def sort(self,tickets):
         """ Ticket sorting TODO should probably use python sort"""
+
+        if self.sortby == 'priority':
+            return tickets
+
         sorted_tickets = []
         #for milestone in trac.ticket.a_option[7]:
         for milestone in trac.ticket.a_option[0]:
@@ -959,6 +971,9 @@ class TracTicketSort:
             if ticket[3]['milestone'] == '':
                 sorted_tickets.append(ticket)
         return sorted_tickets
+    def set_sortby(self, sort_option):
+        self.sortby = sort_option
+        trac.ticket_view()
 
 class TracTicketFilter:
     def __init__(self):
