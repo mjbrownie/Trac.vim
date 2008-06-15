@@ -12,6 +12,7 @@
     4.4. Saving Wiki's                                  |trac-wiki-save|
 5. Trac Ticket View                                     |trac-ticket-view|
     5.1 Ticket Filters                                  |trac-ticket-filters|
+        5.1.1 Ticket Sorting                            |trac-ticket-sorting|
     5.2. Adding Comments                                |trac-ticket-comments|
     5.3. Changing ticket states                         |trac-ticket-changes|
     5.4. Creating Tickets                               |trac-ticket-create|
@@ -135,7 +136,7 @@ Browsing
     ticket id under the cursor.
 
 
-5.1 Filters                                               *trac-ticket-filters*
+5.1 Ticket Filters                                         *trac-ticket-filters*
 
     :TTFilterMilestone  [Milestone]                         *:TTFilterMilestone*
     :TTFilterType       [Type]                                   *:TTFilterType*
@@ -146,10 +147,26 @@ Browsing
     :TTFilterComponent  [Component]                         *:TTFilterComponent*
     :TTFilterOwner      [Owner]                                 *:TTFilterOwner*
 
-    Allows a tab complete option for filtering on respective ticket attributes. 
+    For filtering on respective ticket attributes. Allows a tab complete option
+    for Filter acts as a whitelist ignoring all other tickets not matching the
+    attribute
 
+    :TTIgnoreMilestone  [Milestone]                         *:TTIgnoreMilestone*
+    :TTIgnoreType       [Type]                                   *:TTIgnoreType*
+    :TTIgnoreStatus     [Status]                               *:TTIgnoreStatus*
+    :TTIgnoreResolution [Resolution                        *:TTIgnoreResolution*
+    :TTIgnorePriority   [Priority]                           *:TTIgnorePriority*
+    :TTIgnoreSeverity   [Severity]                           *:TTIgnoreSeverity*
+    :TTIgnoreComponent  [Component]                         *:TTIgnoreComponent*
+    :TTIgnoreOwner      [Owner]                                 *:TTIgnoreOwner*
+
+    The Opposite of TTFilter... acts as a blacklist filter on tickets. 
+
+    :TTIgnoreNoMilestone [NoMilestone]                    *:TTIgnoreNoMilestone*
+    :TTIgnoreNoOwner     [NoOwner]                            *:TTIgnoreNoOwner*
     :TTFilterNoMilestone [NoMilestone]                    *:TTFilterNoMilestone*
     :TTFilterNoOwner     [NoOwner]                            *:TTFilterNoOwner*
+
     Special filters for tickets not owned or categorised
 
     :TTClearAllFilters                                      *:TTClearAllFilters*
@@ -158,6 +175,14 @@ Browsing
         Filter numbers and descriptions are displayed at the top of the ticket
         list. Using this filter will remove the filter number
     :TTListFilters                                              *:TTListFilters*
+
+5.1.2 Ticket Sorting                                       *trac-ticket-sorting*
+
+    :TTSortby [sort_option]                                          *:TTSortby*
+
+    Tickets can either be sorted according to milestone or priority. Milestones
+    will appear in order of due date and ticket priority is arranged according
+    to the trac-admin priority settings.
 
 5.2. Adding Comments                                      *trac-ticket-comments*
 
