@@ -1,7 +1,6 @@
 import os
 import sys
 import vim
-#import traceback
 import xmlrpclib
 import re
 ########################
@@ -50,7 +49,7 @@ class VimWindow:
         if self.firstwrite == 1:
           self.firstwrite = 0
 
-          #TODO tickets #7 and #56 setting to utf-8 causes ticket Encoding errors
+          #TODO tickets #7 and #56 setting to utf-8 causes sporadic ticket Encoding errors
           #msg = msg.encode('utf-8', 'ignore')
           msg = msg.encode('ascii', 'ignore')
 
@@ -282,7 +281,7 @@ class TracWikiUI(UI):
         style = vim.eval ('g:tracWikiStyle') 
         
         if style == 'full':
-            #vim.command('enew')
+            vim.command('tabnew')
             self.wikiwindow.create(' 30 vnew')
             vim.command ("only")
             self.tocwindow.create("vertical aboveleft new")
@@ -950,7 +949,6 @@ class TracTicket(TracRPC):
 
 
 class TracTicketSort:
-
     sortby = 'milestone'
 
     def sort(self,tickets):
@@ -1078,6 +1076,7 @@ class TracTicketUI (UI):
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
         elif style == 'summary':
+            vim.command('tabnew') 
             self.ticketwindow.create('vertical belowright new')
             vim.command('only')
             self.summarywindow.create('belowright 9 new')
@@ -1121,6 +1120,7 @@ class TicketWindow (NonEditableWindow):
         VimWindow.__init__(self, name)
     def on_create(self):
         vim.command('setlocal noswapfile')
+        vim.command('setlocal textwidth=100')
         #vim.command('nnoremap <buffer> <c-]> :python trac_ticket_view("CURRENTLINE") <cr>')
         #vim.command('resize +20')
         #vim.command('nnoremap <buffer> :w<cr> :TracSaveTicket<cr>')
@@ -1452,11 +1452,11 @@ class Trac:
         """ add an attachment to current wiki / ticket """
 
         if self.uiwiki.mode == 1:
-            print "Adding attachment to wiki " + self.wiki.currentPage + '...'
+            print "Adding attachment to wiki " + str(self.wiki.currentPage)+ '...'
             self.wiki.addAttachment (file)
             print 'Done.'
         elif self.uiticket.mode == 1:
-            print "Adding attachment to ticket #" + self.ticket.current_ticket_id + '...'
+            print "Adding attachment to ticket #" + str(self.ticket.current_ticket_id) + '...'
             self.ticket.addAttachment (file)
             print 'Done.'
         
