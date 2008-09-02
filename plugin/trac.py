@@ -50,8 +50,8 @@ class VimWindow:
           self.firstwrite = 0
 
           #TODO tickets #7 and #56 setting to utf-8 causes sporadic ticket Encoding errors
-          #msg = msg.encode('utf-8', 'ignore')
-          msg = msg.encode('ascii', 'ignore')
+          msg = msg.encode('utf-8', 'ignore')
+          #msg = msg.encode('ascii', 'ignore')
 
           self.buffer[:] = str(msg).split('\n')
         else:
@@ -133,8 +133,6 @@ class UI:
         if self.mode == 0: # is normal mode ?
             return
 
-        vim.command('sign unplace 1')
-        vim.command('sign unplace 2')
 
         # destory all created windows
         self.destroy()
@@ -179,8 +177,9 @@ class TracWiki(TracRPC):
                     print "Could not create page " + name
             else:
                 print "Could not find page " + name + ". Use :TWCreate " + name+ " to create it"
-                self.currentPage = False
-                return False
+                #TODO this will create the page anyway. possible bug if theres a network error
+                self.currentPage = name
+                return "Describe " + name + " here."
         return wikitext 
     def save (self,  comment):
         """ Saves a Wiki Page """
@@ -1035,8 +1034,6 @@ class TracTicketUI (UI):
             self.summarywindow.destroy()
             return
 
-        vim.command('sign unplace 1')
-        vim.command('sign unplace 2')
 
         # destory all created windows
         self.destroy()
@@ -1285,7 +1282,6 @@ class Trac:
 
         self.user            = self.get_user(self.server_url)
 
-        vim.command('sign unplace *')
     def wiki_view(self , page = False, b_create = False) :
         if page == False:
             if self.wiki.currentPage == False:
