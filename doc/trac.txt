@@ -31,6 +31,10 @@
     Vim must be compiled with python support and your client must have python
     2.4.4 or later
 
+   To use the summary view you need to have the Align plugin installed for the
+   layout.
+
+   http://www.vim.org/scripts/script.php?script_id=294
 ================================================================================
 2. Setup                                                            *trac-setup*
 
