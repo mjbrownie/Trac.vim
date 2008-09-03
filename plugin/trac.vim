@@ -28,13 +28,18 @@
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
 "  Last Change:
 "          URL:
-"      Version: 0.3.3
+"      Version: 0.3.4
 "
 "        Usage:
 "
 "               You must have a working Trac repository version 0.10 or later
 "               complete with the xmlrpc plugin and a user with suitable
 "               access rights.
+"
+"               To use the summary view you need to have the Align plugin
+"               installed for the layout.
+"
+"               http://www.vim.org/scripts/script.php?script_id=294
 "
 "               Fill in the server login details in the config section below.
 "
