@@ -1106,7 +1106,10 @@ class TicketSummaryWindow(VimWindow):
         vim.command('setlocal noswapfile')
 
     def on_write(self):
-        vim.command('%Align ||')
+        try:
+            vim.command('%Align ||')
+        except:
+            vim.command('echo you should get the Align Plugin to make this view work best')
         vim.command('syn match Ignore /||/')
         #vim.command("setlocal nomodifiable")
         vim.command('norm gg')

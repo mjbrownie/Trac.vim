@@ -114,7 +114,7 @@
 "               - Improve Ticket Viewing option
 "               - Add support for multiple trac servers
 "
-"
+"}}}
 "Configuration
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
