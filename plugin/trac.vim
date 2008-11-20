@@ -206,6 +206,10 @@ if g:tracServerList == {}
     finish
 endif
 
+if !has("python")
+    finish
+endif
+
 if filereadable($VIMRUNTIME."/plugin/trac.py")
   pyfile $VIMRUNTIME/plugin/trac.py
 elseif filereadable($HOME."/.vim/plugin/trac.py")
@@ -215,9 +219,6 @@ else
   finish
 endif
 
-if !has("python")
-    finish
-endif
 
 "Commmand Declarations
 "
