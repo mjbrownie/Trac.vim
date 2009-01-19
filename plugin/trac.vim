@@ -118,6 +118,36 @@
 "Configuration
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+" Load trac.py either from the runtime directory (usually
+" /usr/local/share/vim/vim71/plugin/ if you're running Vim 7.1) or from the
+" home vim directory (usually ~/.vim/plugin/).
+"
+if g:tracServerList == {}
+    finish
+endif
+
+if !has("python")
+    call confirm('Trac.vim needs vim python 2.4.4 support. Wont load', 'OK')
+    finish
+endif
+
+if filereadable($VIMRUNTIME."/plugin/trac.py")
+  pyfile $VIMRUNTIME/plugin/trac.py
+elseif filereadable($HOME."/.vim/plugin/trac.py")
+  pyfile $HOME/.vim/plugin/trac.py
+else
+  call confirm('trac.vim: Unable to find trac.py. Place it in either your home vim directory or in the Vim runtime directory.', 'OK')
+  finish
+endif
+
+python import sys
+python if sys.version_info[:3] < (2,4,4):vim.command('let g:tracPythonVersionFlag = 1')
+
+if exists('g:tracPythonVersionFlag')
+    call confirm  ( "Trac.vim requires python 2.4.4 or later to work correctly" )
+    finish
+endif
+
 if !exists('g:tracDefaultComment')
 let g:tracDefaultComment = 'VimTrac update' " DEFAULT COMMENT CHANGE
 endif
@@ -198,26 +228,6 @@ endif
 
 "
 "
-" Load trac.py either from the runtime directory (usually
-" /usr/local/share/vim/vim71/plugin/ if you're running Vim 7.1) or from the
-" home vim directory (usually ~/.vim/plugin/).
-"
-if g:tracServerList == {}
-    finish
-endif
-
-if !has("python")
-    finish
-endif
-
-if filereadable($VIMRUNTIME."/plugin/trac.py")
-  pyfile $VIMRUNTIME/plugin/trac.py
-elseif filereadable($HOME."/.vim/plugin/trac.py")
-  pyfile $HOME/.vim/plugin/trac.py
-else
-  call confirm('trac.vim: Unable to find trac.py. Place it in either your home vim directory or in the Vim runtime directory.', 'OK')
-  finish
-endif
 
 
 "Commmand Declarations
