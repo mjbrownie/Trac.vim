@@ -483,4 +483,28 @@ fun ComSort (A,L,P)
     return filter (['priority','milestone'], 'v:val =~ "^' . a:A . '"')
 endfun
 
+
+"Callback Function for Minibufexplorer et al windows that dont like being
+"closed by the :only command
+"TODO add other common plugins that may be affected 
+"see OpenCloseCallbacks in the wiki
+fun TracOpenViewCallback()
+    try
+        CMinibufexplorer
+    catch
+        return 0
+    endt
+
+    return 1
+endfun
+
+fun TracCloseViewCallback()
+    try
+        Minibufexplorer
+    catch
+        return 0
+    endt
+    return 1
+endfun
+
 python trac_init()

@@ -282,6 +282,7 @@ class TracWikiUI(UI):
         if style == 'full':
             vim.command('tabnew')
             self.wikiwindow.create(' 30 vnew')
+            vim.command('call TracOpenViewCallback()')
             vim.command ("only")
             self.tocwindow.create("vertical aboveleft new")
             return False
@@ -1075,6 +1076,7 @@ class TracTicketUI (UI):
         elif style == 'summary':
             vim.command('tabnew') 
             self.ticketwindow.create('vertical belowright new')
+            vim.command('call TracOpenViewCallback()')
             vim.command('only')
             self.summarywindow.create('belowright 9 new')
             vim.command('wincmd k')
@@ -1082,6 +1084,7 @@ class TracTicketUI (UI):
             self.summarywindow.set_focus()
         else:
             self.tocwindow.create("belowright new")
+            vim.command('call TracOpenViewCallback()')
             vim.command('only')
             self.ticketwindow.create("vertical  belowright 150 new")
             self.commentwindow.create("belowright 15 new")
