@@ -490,7 +490,7 @@ endfun
 "see OpenCloseCallbacks in the wiki
 fun TracOpenViewCallback()
     try
-        CMinibufexplorer
+        CMiniBufExplorer
     catch
         return 0
     endt
@@ -500,7 +500,7 @@ endfun
 
 fun TracCloseViewCallback()
     try
-        Minibufexplorer
+        MiniBufExplorer
     catch
         return 0
     endt
