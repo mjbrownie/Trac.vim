@@ -1147,8 +1147,8 @@ class TicketCommentWindow (VimWindow):
         VimWindow.__init__(self, name)
 
     def on_create(self):
-        vim.command('nnoremap <buffer> :w<cr> :python trac.add_comment()<cr>')
-        vim.command('nnoremap <buffer> :wq<cr> :python trac.add_comment()<cr>:python trac.normal_view()<cr>')
+        vim.command('nnoremap <buffer> :w<cr> :python trac.ticket.add_comment()<cr>')
+        vim.command('nnoremap <buffer> :wq<cr> :python trac.ticket.add_comment()<cr>:python trac.normal_view()<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         vim.command('setlocal syntax=wiki')
         vim.command('setlocal noswapfile')
