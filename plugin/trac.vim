@@ -26,9 +26,10 @@
 " Name Of File: trac.vim , trac.py
 "  Description: Wiki Client to the Trac Project Manager (trac.edgewall.org)
 "   Maintainer: Michael Brown <michael <at> ascetinteractive.com>
+" Contributors: Brad Fritz
 "  Last Change:
 "          URL:
-"      Version: 0.3.4
+"      Version: 0.3.6
 "
 "        Usage:
 "
