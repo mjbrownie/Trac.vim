@@ -1,10 +1,11 @@
+# Imports {{{1
 import os
 import sys
 import vim
 import xmlrpclib
 import re
 ########################
-# RPC Base Class 
+# RPC Base Class #  {{{1
 ########################
 class TracRPC:
     """ General xmlrpc RPC routines """
@@ -15,9 +16,9 @@ class TracRPC:
     def setServer (self, url):
         self.server_url = url
         self.server = xmlrpclib.ServerProxy(url)
-########################
-# User Interface Base Classes 
-########################
+####################################
+# User Interface Base Classes #  {{{1
+####################################
 class VimWindow:
     """ wrapper class of window of vim """
     def __init__(self, name = 'WINDOW'):
@@ -63,6 +64,7 @@ class VimWindow:
     def on_write(self):
         ''' for vim commands after a write is made to a buffer '''
         pass
+        vim.command('silent %s/\r$//e | set nomod')
     def dump (self):
         """ returns the contents buffer as a string """
         return "\n".join (self.buffer[:])
@@ -143,7 +145,7 @@ class UI:
         self.mode    = 0
         self.cursign = None
 ########################
-# Wiki Module
+# Wiki Module    #  {{{1
 ########################
 class TracWiki(TracRPC):
     """ Trac Wiki Class """
@@ -180,7 +182,7 @@ class TracWiki(TracRPC):
                 #TODO this will create the page anyway. possible bug if theres a network error
                 self.currentPage = name
                 return "Describe " + name + " here."
-        return wikitext 
+        return wikitext
     def save (self,  comment):
         """ Saves a Wiki Page """
         global trac
@@ -199,16 +201,16 @@ class TracWiki(TracRPC):
     def addAttachment (self, file):
         ''' Add attachment '''
         file_name = os.path.basename (file)
-        
+
         self.server.wiki.putAttachment(self.currentPage + '/' + file_name , xmlrpclib.Binary(open(file).read()))
     def getAttachment (self, file):
         ''' Add attachment '''
         buffer = self.server.wiki.getAttachment( file )
         file_name = os.path.basename (file)
-        
+
         if os.path.exists(file_name) == False:
             fp = open(file_name , 'w')
-            fp.write (buffer.data)  
+            fp.write (buffer.data)
             fp.close()
         else:
             print "Will not overwrite existing file "  + file_name
@@ -227,13 +229,13 @@ class TracWiki(TracRPC):
 
         html = '<html><body>' + self.server.wiki.getPageHTML(page)+  '</body></html>'
 
-        file_name = vim.eval ('g:tracTempHtml') 
+        file_name = vim.eval ('g:tracTempHtml')
 
         fp = open(file_name , 'w')
-        fp.write (html) 
+        fp.write (html)
         fp.close()
 
-        vim.command ('!' + browser +" file://" + file_name)    
+        vim.command ('!' + browser +" file://" + file_name)
     def get_options (self):
         """ returns a list of a sites wiki pages for command completes """
         vim.command ('let g:tracOptions = "' + "|".join (self.a_pages) + '"')
@@ -243,7 +245,7 @@ class TracWiki(TracRPC):
         #default to previous revision
         if revision == None:
             revision = self.revision - 1
-    
+
         diffwindow = WikiVimDiffWindow()
         diffwindow.create('vertical belowright diffsplit')
 
@@ -251,11 +253,11 @@ class TracWiki(TracRPC):
         if wikitext != False:
             diffwindow.write(wikitext)
 
-        trac.uiwiki.tocwindow.resize_width(30) 
+        trac.uiwiki.tocwindow.resize_width(30)
         trac.uiwiki.wikiwindow.set_focus()
-        #trac.uiwiki.wikiwindow.resize_width(int (trac.uiwiki.wikiwindow.width / 2)) 
-        diffwindow.resize_width(80) 
-        
+        #trac.uiwiki.wikiwindow.resize_width(int (trac.uiwiki.wikiwindow.width / 2))
+        diffwindow.resize_width(80)
+
 class TracWikiUI(UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -272,13 +274,13 @@ class TracWikiUI(UI):
         self.wiki_attach_window.destroy()
 
         vim.command ("call UnloadWikiCommands()")
-        
+
     def create(self):
         """ create windows  and load the internal Commands """
-        
+
         vim.command ("call LoadWikiCommands()")
-        style = vim.eval ('g:tracWikiStyle') 
-        
+        style = vim.eval ('g:tracWikiStyle')
+
         if style == 'full':
             vim.command('tabnew')
             self.wikiwindow.create(' 30 vnew')
@@ -343,7 +345,7 @@ class WikiTOContentsWindow (NonEditableWindow):
 
         vim.command('sort')
         vim.command('silent norm ggOWikiStart')
-        NonEditableWindow.on_write(self) 
+        NonEditableWindow.on_write(self)
 class WikiAttachmentWindow(NonEditableWindow):
     """ Wiki's attachments """
     def __init__(self, name = 'WIKIATT_WINDOW'):
@@ -353,7 +355,7 @@ class WikiAttachmentWindow(NonEditableWindow):
         vim.command('nnoremap <buffer> <cr> :python trac.get_attachment("CURRENTLINE")<cr>')
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
         #vim.command('setlocal winwidth=30')
-        #vim.command('vertical resize 30') 
+        #vim.command('vertical resize 30')
         vim.command('setlocal cursorline')
         vim.command('setlocal linebreak')
         vim.command('setlocal noswapfile')
@@ -372,7 +374,7 @@ class WikiVimDiffWindow (NonEditableWindow):
         vim.command('setlocal noswapfile')
 
 ########################
-# Search Module
+# Search Module #  {{{1
 ########################
 class TracSearch(TracRPC):
     """ Search for tickets and Wiki's """
@@ -381,18 +383,18 @@ class TracSearch(TracRPC):
     def search(self , search_pattern):
         """ Perform a search call  """
         a_search =  self.server.search.performSearch(search_pattern)
-        
+
         str_result = "Results for " + search_pattern + "\n\n"
         str_result += "(Hit <enter> or <space >on a line containing Ticket:>>)"
         for search in a_search:
-            
-            if search[0].find('/ticket/') != -1: 
+
+            if search[0].find('/ticket/') != -1:
                 str_result += "\nTicket:>> " + os.path.basename (search[0])+ "\n    "
-            if search[0].find('/wiki/')!= -1: 
+            if search[0].find('/wiki/')!= -1:
                 str_result += "\nWiki:>> " + os.path.basename(search[0]) + "\n    "
-            if search[0].find('/changeset/')!= -1: 
+            if search[0].find('/changeset/')!= -1:
                 str_result += "\nChangeset:>> " + search[0]  + "\n    " #os.path.basename(search[0])
-            str_result += "\n    ".join (search[4].strip().split("\n")) + "\n" 
+            str_result += "\n    ".join (search[4].strip().split("\n")) + "\n"
             str_result += "\n-------------------------------------------------"
 
         return str_result
@@ -409,11 +411,12 @@ class TracSearchUI(UI):
         self.searchwindow.destroy()
     def create(self):
         """ create windows """
-        style = vim.eval ('g:tracSearchStyle') 
+        style = vim.eval ('g:tracSearchStyle')
         if style == 'right':
             self.searchwindow.create("vertical belowright new")
         else:
             self.searchwindow.create("vertical aboveleft new")
+
 class TracSearchWindow(NonEditableWindow):
     """ for displaying search results """
     def __init__(self, name = 'SEARCH_WINDOW'):
@@ -430,7 +433,7 @@ class TracSearchWindow(NonEditableWindow):
         vim.command('setlocal noswapfile')
     def on_write (self):
         """ Basic Highlighting """
-        NonEditableWindow.on_write(self) 
+        NonEditableWindow.on_write(self)
         vim.command('syntax reset')
         vim.command('syn match Keyword /\w*:>> .*$/ contains=Title')
         vim.command('syn match Title /\w*:>>/ contained')
@@ -438,13 +441,13 @@ class TracSearchWindow(NonEditableWindow):
         vim.command('syn match SpecialKey /^-*$/')
 
 ########################
-# Ticket Module
+# Ticket Module #  {{{1
 ########################
 class TracTicket(TracRPC):
     """ Trac Ticket Class """
     def __init__ (self, server_url):
         TracRPC.__init__(self, server_url)
-        
+
         self.current_ticket_id = False
         self.a_option = []
         self.a_tickets = []
@@ -454,7 +457,7 @@ class TracTicket(TracRPC):
     def setServer (self, url):
         self.server = xmlrpclib.ServerProxy(url)
         self.getOptions()
-    def getOptions (self): 
+    def getOptions (self):
         """ Get all milestone/ priority /status options """
 
         multicall = xmlrpclib.MultiCall(self.server)
@@ -462,9 +465,9 @@ class TracTicket(TracRPC):
         multicall.ticket.type.getAll()
         multicall.ticket.status.getAll()
         multicall.ticket.resolution.getAll()
-        multicall.ticket.priority.getAll() 
+        multicall.ticket.priority.getAll()
         multicall.ticket.severity.getAll()
-        multicall.ticket.component.getAll() 
+        multicall.ticket.component.getAll()
 
         a_option = []
 
@@ -473,16 +476,16 @@ class TracTicket(TracRPC):
 
         for milestone in a_option[0]:
             multicall.ticket.milestone.get(milestone)
-        
+
         a_option.append(multicall())
 
         self.a_option =  a_option
     def getAllTickets(self,owner, b_use_cache = False):
         """ Gets a List of Ticket Pages """
-        
+
         if self.a_option == []:
             self.getOptions()
-        
+
         if b_use_cache:
             tickets = self.a_tickets
         else:
@@ -521,21 +524,21 @@ class TracTicket(TracRPC):
                 str_ticket += " * Summary: "      + ticket[3]["summary"]  + "\n"
                 str_ticket += "     * Priority: " + ticket[3]["priority"] + "\n"
                 str_ticket += "     * Status: "   + ticket[3]["status"]   + "\n"
-                milestone =  ticket[3]["milestone"] 
+                milestone =  ticket[3]["milestone"]
                 if (milestone == ''):
                     milestone = 'NOMILESTONE'
-                component =  ticket[3]["component"] 
+                component =  ticket[3]["component"]
                 if (component == ''):
                     component = 'NOCOMPONENT'
                 str_ticket += "     * Component: " + component          + "\n"
                 str_ticket += "     * Milestone: " + milestone          + "\n"
                 str_ticket += "     * Type: "      + ticket[3]["type"]  + "\n"
                 str_ticket += "     * Owner: "     + ticket[3]["owner"] + "\n    "
-                
+
                 if self.session_is_present(ticket[0]):
                     str_ticket += "     * Session: PRESENT \n"
-                str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n" 
-                
+                str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n"
+
                 #str_ticket += "--------------------------------------------"
 
                 ticket_list += str_ticket
@@ -553,7 +556,7 @@ class TracTicket(TracRPC):
         else:
             multicall = xmlrpclib.MultiCall(self.server)
             #for ticket in self.server.ticket.query("owner=" + owner):
-            for ticket in self.server.ticket.query():
+            for ticket in self.server.ticket.query(vim.eval('g:tracTicketClause')):
                 multicall.ticket.get(ticket)
             tickets = multicall()
             self.a_tickets = tickets
@@ -567,7 +570,7 @@ class TracTicket(TracRPC):
             #ticket_list += self.filter.list()
 
         milestone = ''
-    
+
         tickets = self.sort.sort(tickets)
         for ticket in tickets:
 
@@ -583,10 +586,11 @@ class TracTicket(TracRPC):
                     #str_ticket += "--------------------------------------------" + "\n"
 
                 str_ticket += ""      + str(ticket[0])
-                str_ticket += ". || " + ticket[3]["summary"][0:50]  
+                str_ticket += ". || " + ticket[3]["summary"][0:50]
                 if len(ticket[3]["summary"]) > 50 :
                     str_ticket += "..."
-                str_ticket += " || " + ticket[3]["priority"]
+                if 'priority' in ticket[3]:
+                    str_ticket += " || " + ticket[3]["priority"]
                 str_ticket += " || " + ticket[3]["status"]
                 milestone =  ticket[3]["milestone"]
                 if (milestone == ''):
@@ -596,7 +600,8 @@ class TracTicket(TracRPC):
                     component = 'NOCOMPONENT'
                 str_ticket += " || " + component
                 str_ticket += " || " + milestone
-                str_ticket += " || " + ticket[3]["type"]
+                if 'type' in ticket[3]:
+                    str_ticket += " || " + ticket[3]["type"]
                 str_ticket += " || " + ticket[3]["owner"] + "\n"
 
                 #if self.session_is_present(ticket[0]):
@@ -616,7 +621,7 @@ class TracTicket(TracRPC):
 
         ticket =  self.server.ticket.get(int (id))
         self.current_ticket_id = id
-        self.current_component = ticket[3]["component"] 
+        self.current_component = ticket[3]["component"]
 
         self.listAttachments()
 
@@ -629,15 +634,17 @@ class TracTicket(TracRPC):
         str_ticket += "*       Owner: " + ticket[3]["owner"]     + "\n"
         str_ticket += "*      Status: " + ticket[3]["status"]    + "\n"
         str_ticket += "*     Summary: " + ticket[3]["summary"]   + "\n"
-        str_ticket += "*        Type: " + ticket[3]["type"]      + "\n"
-        str_ticket += "*    Priority: " + ticket[3]["priority"]  + "\n"
+        if 'type' in ticket[3]:
+            str_ticket += "*        Type: " + ticket[3]["type"]      + "\n"
+        if 'priority' in ticket[3]:
+            str_ticket += "*    Priority: " + ticket[3]["priority"]  + "\n"
         str_ticket += "*   Component: " + ticket[3]["component"] + "\n"
         str_ticket += "*   Milestone: " + ticket[3]["milestone"] + "\n"
 
         if ticket[3].has_key('version'):
             str_ticket += "*     Version: " + ticket[3]["version"] + "\n"
-        #look for session files 
-        
+        #look for session files
+
         if self.session_is_present():
             str_ticket += "*     Session: PRESENT \n"
         else:
@@ -647,9 +654,9 @@ class TracTicket(TracRPC):
         for attach in self.current_attachments:
             str_ticket += '               ' + attach
 
-        str_ticket += "\n---------------------------------------------------\n" 
-        str_ticket += "= Description: =\n\n    " 
-        str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n" 
+        str_ticket += "\n---------------------------------------------------\n"
+        str_ticket += "= Description: =\n\n    "
+        str_ticket += "\n    ".join (ticket[3]["description"].strip().split("\n")) + "\n"
         str_ticket += "= CHANGELOG =\n\n"
 
         import datetime
@@ -665,7 +672,7 @@ class TracTicket(TracRPC):
                 brief = vim.eval('g:tracTicketBriefDescription')
                 if change[2] == 'comment':
                     str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": comment) ==\n    "
-                    str_ticket += "\n    ".join (change[4].strip().split("\n")) + "\n" 
+                    str_ticket += "\n    ".join (change[4].strip().split("\n")) + "\n"
                 elif brief == 0:
                     if change[2] == 'description':
                         str_ticket +=  '== ' +  my_time + " (" + change[1]  + ": modified description) ==\n"
@@ -684,7 +691,7 @@ class TracTicket(TracRPC):
     def addAttachment (self, file):
         ''' Add attachment '''
         file_name = os.path.basename (file)
-        
+
         self.server.ticket.putAttachment(self.current_ticket_id, file,'attachment' , xmlrpclib.Binary(open(file).read()))
     def listAttachments(self):
         a_attach = self.server.ticket.listAttachments(self.current_ticket_id)
@@ -698,10 +705,10 @@ class TracTicket(TracRPC):
         ''' Add attachment '''
         buffer = self.server.ticket.getAttachment( self.current_ticket_id , file )
         file_name = os.path.basename (file)
-    
+
         if os.path.exists(file_name) == False:
             fp = open(file_name , 'w')
-            fp.write (buffer.data)  
+            fp.write (buffer.data)
             fp.close()
         else:
             print "Will not overwrite existing file "  + file_name
@@ -746,8 +753,8 @@ class TracTicket(TracRPC):
     def update_description(self):
         """ Adds Comment window as a description to the current ticket """
         global trac
-        
-        confirm = vim.eval('confirm("Overwrite Description?", "&Yes\n&No\n",2)') 
+
+        confirm = vim.eval('confirm("Overwrite Description?", "&Yes\n&No\n",2)')
         if int (confirm) == 2:
             print "Cancelled."
             return False
@@ -765,7 +772,7 @@ class TracTicket(TracRPC):
         trac.ticket.updateTicket('', attribs, False)
         trac.uiticket.commentwindow.clean()
         trac.ticket_view(trac.ticket.current_ticket_id)
-    def create(self, summary = 'new ticket', type = False, server = False): 
+    def create(self, summary = 'new ticket', type = False, server = False):
         """ writes comment window to a new  ticket  """
         global trac
 
@@ -781,7 +788,7 @@ class TracTicket(TracRPC):
             print "Can't create a ticket when not in Ticket View"
             return 0
 
-        confirm = vim.eval('confirm("Create Ticket on ' + trac.server_name + '?", "&Yes\n&No\n",2)') 
+        confirm = vim.eval('confirm("Create Ticket on ' + trac.server_name + '?", "&Yes\n&No\n",2)')
         if int (confirm) == 2:
             print "Cancelled."
             return False
@@ -808,12 +815,12 @@ class TracTicket(TracRPC):
             print "You need to have an active ticket"
             return False
 
-        directory = vim.eval('g:tracSessionDirectory')   
+        directory = vim.eval('g:tracSessionDirectory')
         if os.path.isfile(directory) != False:
             print "Cant create session directory"
             return False
-        
-        if os.path.isdir(directory) == False: 
+
+        if os.path.isdir(directory) == False:
             os.mkdir(directory)
 
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
@@ -831,13 +838,13 @@ class TracTicket(TracRPC):
             return False
 
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
-        directory = vim.eval('g:tracSessionDirectory')   
+        directory = vim.eval('g:tracSessionDirectory')
         sessfile = directory + '/' + serverdir + "/vimsess." + str(self.current_ticket_id)
 
         if os.path.isfile(sessfile) == False:
             print "This ticket does not have a session: " + sessfile
             return False
-            
+
 
         vim.command("bdelete TICKETTOC_WINDOW")
         vim.command("bdelete TICKET_WINDOW")
@@ -858,12 +865,12 @@ class TracTicket(TracRPC):
             else:
                 component = self.current_component
 
-        directory = vim.eval('g:tracSessionDirectory')   
+        directory = vim.eval('g:tracSessionDirectory')
         if os.path.isfile(directory) != False:
             print "Cant create session directory"
             return False
-        
-        if os.path.isdir(directory) == False: 
+
+        if os.path.isdir(directory) == False:
             os.mkdir(directory)
 
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
@@ -888,13 +895,13 @@ class TracTicket(TracRPC):
 
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
         component = re.sub (r'[^\w]', '', component)
-        directory = vim.eval('g:tracSessionDirectory')   
+        directory = vim.eval('g:tracSessionDirectory')
         sessfile = directory + '/' + serverdir + "/vimsess." + str(component)
 
         if os.path.isfile(sessfile) == False:
             print "This ticket does not have a session: " + sessfile
             return False
-            
+
 
         vim.command("bdelete TICKETTOC_WINDOW")
         vim.command("bdelete TICKET_WINDOW")
@@ -910,15 +917,15 @@ class TracTicket(TracRPC):
         if id == False:
             id = self.current_ticket_id
 
-        directory = vim.eval('g:tracSessionDirectory')   
+        directory = vim.eval('g:tracSessionDirectory')
         serverdir = re.sub (r'[^\w]', '', trac.server_name)
 
         return directory + '/' + serverdir + "/vimsess." + str (id)
     def session_is_present(self, id = False):
-        sessfile = self.get_session_file(id) 
-        return  os.path.isfile(sessfile) 
+        sessfile = self.get_session_file(id)
+        return  os.path.isfile(sessfile)
     def set_summary(self, summary):
-        confirm = vim.eval('confirm("Overwrite Summary?", "&Yes\n&No\n",2)') 
+        confirm = vim.eval('confirm("Overwrite Summary?", "&Yes\n&No\n",2)')
         if int (confirm) == 2:
             print "Cancelled."
             return False
@@ -984,7 +991,7 @@ class TracTicketFilter:
     def __init__(self):
         self.filters = []
     def add (self,  keyword,attribute, b_whitelist = True, b_refresh_ticket = True):
-        self.filters.append({'attr':attribute,'key':keyword,'whitelist':b_whitelist}) 
+        self.filters.append({'attr':attribute,'key':keyword,'whitelist':b_whitelist})
         if b_refresh_ticket == True:
             self.refresh_tickets()
     def clear(self):
@@ -992,7 +999,7 @@ class TracTicketFilter:
         self.refresh_tickets()
     def delete (self, number):
         number = int(number)
-        try: 
+        try:
             del self.filters[number -1]
         except:
             return False
@@ -1001,7 +1008,7 @@ class TracTicketFilter:
         if self.filters == []:
             return ''
 
-        i = 0 
+        i = 0
         str_list = ""
         for filter in self.filters:
             i+=1
@@ -1023,6 +1030,7 @@ class TracTicketFilter:
     def refresh_tickets(self):
         global trac
         trac.ticket_view(trac.ticket.current_ticket_id, True)
+
 class TracTicketUI (UI):
     """ Trac Wiki User Interface Manager """
     def __init__(self):
@@ -1053,7 +1061,7 @@ class TracTicketUI (UI):
         self.cursign = None
     def destroy(self):
         """ destroy windows """
-        
+
         vim.command ("call UnloadTicketCommands()")
 
         self.ticketwindow.destroy()
@@ -1063,7 +1071,7 @@ class TracTicketUI (UI):
 
     def create(self):
         """ create windows """
-        style = vim.eval ('g:tracTicketStyle') 
+        style = vim.eval ('g:tracTicketStyle')
         if style == 'right':
             self.tocwindow.create("vertical belowright new")
             self.ticketwindow.create("belowright new")
@@ -1081,7 +1089,7 @@ class TracTicketUI (UI):
             self.ticketwindow.create("vertical belowright new")
             self.commentwindow.create("vertical belowright new")
         elif style == 'summary':
-            vim.command('tabnew') 
+            vim.command('tabnew')
             self.ticketwindow.create('vertical belowright new')
             vim.command('call TracOpenViewCallback()')
             vim.command('only')
@@ -1170,9 +1178,9 @@ class TicketTOContentsWindow (NonEditableWindow):
         vim.command('setlocal noswapfile')
         vim.command('setlocal winwidth=50')
         vim.command('vertical resize 50')
-#########################
-# Trac Server (UI Not Implemented)
-#########################
+#########################################
+# Trac Server (UI Not Implemented) #  {{{1
+#########################################
 class TracServerUI (UI):
     """ Server User Interface View """
     def __init__(self):
@@ -1196,15 +1204,15 @@ class ServerWindow(NonEditableWindow):
     def on_create(self):
         vim.command('nnoremap <buffer> :q<cr> :python trac.normal_view()<cr>')
 ########################
-# Timeline Module
+# Timeline Module #  {{{1
 ########################
 class TracTimeline:
     def read_timeline(self):
         """ Call the XML Rpc list """
-        global trac 
-        try: 
+        global trac
+        try:
             import feedparser
-        except ImportError: 
+        except ImportError:
             print "Please install feedparser.py!"
             return False
 
@@ -1220,16 +1228,16 @@ class TracTimeline:
             #Each item is a dictionary mapping properties to values
             str_feed +=  "Update: "  + strftime("%Y-%m-%d %H:%M:%S", item.updated_parsed ) + "\n"
 
-            m = re.match(r"^Ticket #(\d+) (.*)$", item.title) 
-            if m != None: 
-                str_feed += "Ticket:>> " + m.group(1) + "\n" 
+            m = re.match(r"^Ticket #(\d+) (.*)$", item.title)
+            if m != None:
+                str_feed += "Ticket:>> " + m.group(1) + "\n"
                 str_feed += m.group(2) + "\n"
             m = re.match(r"^([\w\d]+) (edited by .*)$", item.title)
-            if m != None: 
+            if m != None:
                 str_feed += "Wiki:>> " + m.group(1) + "\n"
                 str_feed += m.group(2) + "\n"
-            m = re.match(r"^Changeset \[([\d]+)\]: (.*)$", item.title) 
-            if m != None: 
+            m = re.match(r"^Changeset \[([\d]+)\]: (.*)$", item.title)
+            if m != None:
                 str_feed += "Changeset:>> " + m.group(1) + "\n"
                 str_feed += m.group(2) + "\n"
 
@@ -1244,7 +1252,7 @@ class TracTimelineUI(UI):
         self.timeline_window = TracTimelineWindow()
         self.mode  = 0
     def create (self):
-       style = vim.eval ('g:tracTimelineStyle') 
+       style = vim.eval ('g:tracTimelineStyle')
 
        if style == 'right':
            self.timeline_window.create("vertical belowright new")
@@ -1269,7 +1277,7 @@ class TracTimelineWindow(NonEditableWindow):
         vim.command('nnoremap <buffer> <space> :python trac.search_open(True)<cr>')
         vim.command('setlocal noswapfile')
 #########################
-# Main Class
+# Main Class      #  {{{1
 #########################
 class Trac:
     """ Main Trac class """
@@ -1281,7 +1289,7 @@ class Trac:
         self.server_name     = server_list.keys()[0]
 
         self.default_comment = comment
-        
+
         self.wiki            = TracWiki(self.server_url)
         self.search          = TracSearch(self.server_url)
         self.ticket          = TracTicket(self.server_url)
@@ -1330,11 +1338,11 @@ class Trac:
         print self.wiki.get_page_info()
     def ticket_view(self ,id = False, b_use_cache = False) :
         """ Creates The Ticket View """
-        
-        print 'Connecting...'
-        
 
-        if id == 'CURRENTLINE': 
+        print 'Connecting...'
+
+
+        if id == 'CURRENTLINE':
             id = vim.current.line
             if (id.find('Ticket:>>') == -1):
                 pos = vim.current.window.cursor
@@ -1350,7 +1358,7 @@ class Trac:
                 return False
 
             id = id.replace ('Ticket:>> ' ,'')
-        
+
         if id == 'SUMMARYLINE':
             m = re.search(r'^([0123456789]+)',vim.current.line)
             id = int(m.group(0))
@@ -1358,7 +1366,7 @@ class Trac:
         self.normal_view()
         self.uiticket.open()
 
-        style = vim.eval ('g:tracTicketStyle') 
+        style = vim.eval ('g:tracTicketStyle')
         if style == 'summary':
             self.uiticket.summarywindow.clean()
             self.uiticket.summarywindow.write(self.ticket.getAllTicketsSummary(self.user, b_use_cache))
@@ -1368,7 +1376,7 @@ class Trac:
 
         self.uiticket.ticketwindow.clean()
 
-        
+
         if (id == False):
             if self.ticket.current_ticket_id == False:
                 self.uiticket.ticketwindow.write("Select Ticket To Load")
@@ -1420,7 +1428,7 @@ class Trac:
         self.uitimeline.timeline_window.clean()
         self.uitimeline.timeline_window.write((output_string))
     def set_current_server (self, server_key, quiet = False, view = False):
-        """ Sets the current server key """ 
+        """ Sets the current server key """
 
         self.ticket.current_ticket_id = False
         self.wiki.currentPage = False
@@ -1432,17 +1440,17 @@ class Trac:
         self.wiki.setServer(self.server_url)
         self.ticket.setServer(self.server_url)
         self.search.setServer(self.server_url)
-        
+
         self.user = self.get_user(self.server_url)
 
         trac.normal_view()
 
         if quiet == False:
             print "SERVER SET TO : " + server_key
-           
+
             #Set view to default or custom
             if view == False:
-                view = vim.eval ('g:tracDefaultView') 
+                view = vim.eval ('g:tracDefaultView')
 
             { 'wiki'   : self.wiki_view,
             'ticket'   : self.ticket_view,
@@ -1468,14 +1476,14 @@ class Trac:
             print "Adding attachment to ticket #" + str(self.ticket.current_ticket_id) + '...'
             self.ticket.addAttachment (file)
             print 'Done.'
-        
+
         else:
             print "You need an active ticket or wiki open!"
     def get_attachment (self, file):
         ''' retrieves attachment '''
 
         if (file == 'CURRENTLINE'):
-            file = vim.current.line 
+            file = vim.current.line
 
         if self.uiwiki.mode == 1:
             print "Retrieving attachment from wiki " + self.wiki.currentPage + '...'
@@ -1495,7 +1503,7 @@ class Trac:
             option = self.ticket.current_attachments
         else:
             print "You need an active ticket or wiki open!"
-        
+
         vim.command ('let g:tracOptions = "' + "|".join (option) + '"')
     def preview (self, b_dump = False):
         ''' browser view of current wiki buffer '''
@@ -1513,13 +1521,13 @@ class Trac:
 
         html = '<html><body>' + self.wiki.getWikiHtml (wikitext) +  '</body></html>'
 
-        file_name = vim.eval ('g:tracTempHtml') 
+        file_name = vim.eval ('g:tracTempHtml')
 
         fp = open(file_name , 'w')
-        fp.write (html) 
+        fp.write (html)
         fp.close()
 
-        
+
         if b_dump == True:
             #self.normal_view()
             #vim.command ('split')
@@ -1529,7 +1537,7 @@ class Trac:
             vim.command ('set ft=text');
             vim.command ('norm gg');
         else:
-            vim.command ('!' + browser +" file://" + file_name);    
+            vim.command ('!' + browser +" file://" + file_name);
     def changeset_view(self, changeset, b_full_path = False):
         #if b_full_path == True:
         changeset = self.wiki.server_url.replace('login/xmlrpc' , 'changeset/' + changeset)
@@ -1541,7 +1549,7 @@ class Trac:
         vim.command ('silent Nread ' + changeset + '?format=diff');
         vim.command ('set ft=diff');
 #########################
-# VIM API FUNCTIONS
+# VIM API FUNCTIONS #  {{{1
 #########################
 def trac_init():
     ''' Initialize Trac Environment '''
