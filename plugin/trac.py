@@ -113,6 +113,7 @@ class NonEditableWindow(VimWindow):
         vim.command("setlocal modifiable")
     def on_write(self):
         pass
+        vim.command('silent %s/\r$//e | set nomod')
         vim.command("setlocal nomodifiable")
     def clean(self):
         """ clean all datas in buffer """
@@ -632,6 +633,7 @@ class TracTicket(TracRPC):
         str_ticket = "= Ticket Summary =\n\n"
         str_ticket += "*   Ticket ID: " + str(ticket[0])         + "\n"
         str_ticket += "*       Owner: " + ticket[3]["owner"]     + "\n"
+        str_ticket += "* Reported By: "     + ticket[3]["reporter"] + "\n"
         str_ticket += "*      Status: " + ticket[3]["status"]    + "\n"
         str_ticket += "*     Summary: " + ticket[3]["summary"]   + "\n"
         if 'type' in ticket[3]:
@@ -1130,6 +1132,7 @@ class TicketSummaryWindow(VimWindow):
             vim.command('echo you should get the Align Plugin to make this view work best')
         vim.command('syn match Ignore /||/')
         #vim.command("setlocal nomodifiable")
+        vim.command('silent %s/\r$//e | set nomod')
         vim.command('norm gg')
 
 class TicketWindow (NonEditableWindow):
