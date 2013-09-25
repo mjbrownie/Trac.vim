@@ -132,16 +132,17 @@ if !has("python")
     finish
 endif
 
-if filereadable($VIMRUNTIME."/plugin/trac.py")
-  pyfile $VIMRUNTIME/plugin/trac.py
-elseif filereadable($HOME."/.vim/plugin/trac.py")
-  pyfile $HOME/.vim/plugin/trac.py
+let script_filename = expand("<sfile>:p:h") . "/trac.py"
+
+if filereadable(script_filename)
+  python import sys, vim
+  python sys.path.append(vim.eval("script_filename"))
+  python import trac
 else
   call confirm('trac.vim: Unable to find trac.py. Place it in either your home vim directory or in the Vim runtime directory.', 'OK')
   finish
 endif
 
-python import sys
 python if sys.version_info[:3] < (2,4,4):vim.command('let g:tracPythonVersionFlag = 1')
 
 if exists('g:tracPythonVersionFlag')
@@ -508,4 +509,4 @@ fun TracCloseViewCallback()
     return 1
 endfun
 
-python trac_init()
+python trac.trac_init()
