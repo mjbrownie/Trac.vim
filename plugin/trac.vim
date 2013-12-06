@@ -132,12 +132,11 @@ if !has("python")
     finish
 endif
 
-let script_filename = expand("<sfile>:p:h") . "/trac.py"
+let script_dir = expand("<sfile>:p:h")
 
-if filereadable(script_filename)
+if filereadable(script_dir . "/trac.py")
   python import sys, vim
-  python sys.path.append(vim.eval("script_filename"))
-  execute "pyfile " . script_filename
+  python sys.path.append(vim.eval("script_dir"))
   python import trac
 else
   call confirm('trac.vim: Unable to find trac.py. Place it in either your home vim directory or in the Vim runtime directory.', 'OK')
